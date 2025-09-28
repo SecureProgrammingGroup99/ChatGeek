@@ -1,0 +1,35 @@
+// backend/config/db.js
+"use strict";
+
+const mongoose = require("mongoose");
+
+const connectDB = async () => {
+  const uri = process.env.MONGO_URI;
+  if (!uri) {
+    console.error("[DB] Missing MONGO_URI in .env");
+    throw new Error("Missing MONGO_URI");
+  }
+
+  console.log(
+    "[DB] Attempting MongoDB connect to",
+    uri.replace(/\/\/.*@/, "//<redacted>@")
+  );
+
+  try {
+    const conn = await mongoose.connect(uri, {
+      // good defaults
+      serverSelectionTimeoutMS: 10000,
+      // retryWrites, w: majority are controlled by the URI params
+    });
+    console.log(
+      `[DB] MongoDB Connected: ${conn.connection.host} (db: ${conn.connection.name})`
+    );
+  } catch (err) {
+    console.error("[DB] MongoDB connection FAILED (full error below):");
+    console.error(err); // full object inc. stack & code
+    // Keep throwing so server.js knows startup failed
+    throw err;
+  }
+};
+
+module.exports = connectDB;

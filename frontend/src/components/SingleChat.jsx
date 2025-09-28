@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ChatState } from '../Context/chatProvider'
-import { Box, FormControl, IconButton, Input, Spinner, Text, useToast } from '@chakra-ui/react';
-import { ArrowBackIcon } from '@chakra-ui/icons';
+import { Box, FormControl, IconButton, Input, Spinner, Text, useToast, Button } from '@chakra-ui/react';
+import { ArrowBackIcon, AttachmentIcon } from '@chakra-ui/icons';
 import { getSender, getSenderFull } from '../config/chatlogics';
 import ProfileModel from './misc/profileModel';
 import UpdateGroupChatModal from './misc/UpdateGroupChatModal';
@@ -10,10 +10,12 @@ import ScrollableChat from './ScrollableChat';
 import io from 'socket.io-client'
 import './styles.css'
 
-const ENDPOINT = "http://localhost:5000";
+// NEW: import file transfer helpers
+import { sendFile, handleIncomingFileMessages } from "../utils/fileTransfer";
+
+const ENDPOINT = "http://localhost:5001";
 // eslint-disable-next-line
 var socket, selectedChatCompare;
-
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     const [messages, setMessages] = useState([]);
@@ -25,6 +27,21 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     const toast = useToast();
 
     const { selectedChat, setSelectedChat, user, notification, setNotification } = ChatState();
+
+    // === Handle file receive ===
+    useEffect(() => {
+        const { onMessage } = handleIncomingFileMessages((file) => {
+            setMessages((prev) => [
+                ...prev,
+                { type: "file", content: file.name, blob: file.blob }
+            ]);
+        });
+
+        // Hook into socket.io to listen for file messages
+        socket?.on("file message", (payload) => {
+            onMessage(payload.type, payload);
+        });
+    }, []);
 
     const fetchMessages = async () => {
         if (!selectedChat) return;
@@ -98,7 +115,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         socket.on("connected", () => setSocketConnected(true));
         socket.on("typing", () => setIsTyping(true));
         socket.on("stop typing", () => setIsTyping(false));
-
         // eslint-disable-next-line
     }, []);
 
@@ -124,7 +140,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         });
     });
 
-
     const typingHandler = (e) => {
         setNewMessage(e.target.value);
 
@@ -144,6 +159,22 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 setTyping(false);
             }
         }, timerLength);
+    };
+
+    // === NEW: handle file select ===
+    const handleFileSelect = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // TEMP encryption key — Josh will replace later
+        const encryptionKey = "test-key";
+
+        await sendFile(file, selectedChat._id, encryptionKey);
+
+        setMessages((prev) => [
+            ...prev,
+            { type: "info", content: `You sent file: ${file.name}` }
+        ]);
     };
 
     return (
@@ -197,62 +228,51 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                                 margin={"auto"}
                             />
                         ) : (
-                                    <ScrollableChat messages={messages} />
+                            <ScrollableChat messages={messages} />
                         )}
 
-                        {!selectedChat.isCommunity ? 
-                        ( <FormControl
-                            onKeyDown={sendMessage}
-                            isRequired
-                            mt={3}
-                        >
+                        {/* Input Area */}
+                        <FormControl onKeyDown={sendMessage} isRequired mt={3}>
                             {istyping ? (
-                                <div className='typing' style={{ width: "5rem", borderRadius: "10px", marginBottom: "10px", backgroundColor: "#dedede", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                                <div className="typing" style={{ width: "5rem", borderRadius: "10px", marginBottom: "10px", backgroundColor: "#dedede", display: "flex", justifyContent: "center", alignItems: "center" }}>
                                     Typing <div className="dot" />
-                                        <div className="dot" />
-                                        <div className="dot" />
+                                    <div className="dot" />
+                                    <div className="dot" />
                                 </div>
-                            ) : (
-                                <></>
-                            )}
-                            <Input variant={"filled"} bg={"#fff"} placeholder='Enter a Message' onChange={typingHandler} value={newMessage} />
-                        </FormControl> ) : ( <FormControl
-                            onKeyDown={sendMessage}
-                            isRequired
-                            mt={3}
-                        >
-                            {istyping ? (
-                                <div className='typing' style={{ width: "5rem", borderRadius: "10px", marginBottom: "10px", backgroundColor: "#dedede", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                                    Typing <div className="dot" />
-                                        <div className="dot" />
-                                        <div className="dot" />
-                                </div>
-                            ) : (
-                                <></>
-                            )}
-                            <Input variant={"filled"} bg={"#fff"} disabled={selectedChat.groupAdmin._id !== user._id} placeholder='Enter a Message' onChange={typingHandler} value={newMessage} />
-                        </FormControl> )
-                        }
+                            ) : null}
+
+                            {/* File upload button */}
+                            <Button
+                                as="label"
+                                leftIcon={<AttachmentIcon />}
+                                colorScheme="blue"
+                                variant="outline"
+                                cursor="pointer"
+                            >
+                                Attach
+                                <Input type="file" display="none" onChange={handleFileSelect} />
+                            </Button>
+
+                            {/* Text input */}
+                            <Input
+                                variant="filled"
+                                bg="#fff"
+                                placeholder="Enter a Message"
+                                onChange={typingHandler}
+                                value={newMessage}
+                            />
+                        </FormControl>
                     </Box>
                 </>
             ) : (
-                <Box
-                    display={"flex"}
-                    alignItems={"center"}
-                    justifyContent={"center"}
-                    h={"100%"}
-                >
-                    <Text
-                        fontSize={"3xl"}
-                        pb={3}
-                        fontFamily={"Work sans"}
-                    >
+                <Box display="flex" alignItems="center" justifyContent="center" h="100%">
+                    <Text fontSize="3xl" pb={3} fontFamily="Work sans">
                         Click on a User to start Chatting
                     </Text>
                 </Box>
             )}
         </>
-    )
-}
+    );
+};
 
-export default SingleChat
+export default SingleChat;
