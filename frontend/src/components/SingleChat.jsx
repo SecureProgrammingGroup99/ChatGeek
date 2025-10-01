@@ -79,61 +79,70 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         }
     };
 
+    const BYPASS_SIG = "BYPASS_SIG"; // marker to indicate no real signature/encryption
+
     const sendMessage = async (event) => {
-        if (event.key === "Enter" && newMessage) {
-          console.log("[DBG] sendMessage triggered with:", newMessage);
-      
-          try {
-            const config = {
-              headers: {
-                "Content-type": "application/json",
-                Authorization: `Bearer ${user.token}`,
-              },
-            };
-            setNewMessage("");
-      
-            const myPrivKey = localStorage.getItem("my_privkey");
-            console.log("[DBG] myPrivKey loaded?", !!myPrivKey); //private key is expected to be saved in browser localStorage under "my_privkey".
-      
-            const recipient = selectedChat.users.find(u => u._id !== user._id);
-            console.log("[DBG] recipient:", recipient);
-            console.log("[DBG] recipient.pubkey loaded?", !!recipient.pubkey); // recipient.pubkey should be part of the user object that comes from  backend (in selectedChat.users).
-      
-            const ciphertext = await encryptMessage(newMessage, recipient.pubkey);
-            const signature = await signMessage(ciphertext, myPrivKey);
-      
-            console.log("[DBG] ciphertext:", ciphertext);
-            console.log("[DBG] signature:", signature);
-      
-            const { data } = await axios.post(
-              "/api/message",
-              {
-                ciphertext,
-                content_sig: signature,
-                chatId: selectedChat._id,
-              },
-              config
-            );
-      
-            console.log("[DBG] axios POST /api/message returned:", data);
-      
-            socket.emit("new message", data);
-            console.log("[DBG] socket.emit(new message) sent:", data);
-      
-            setMessages([...messages, { ...data, plaintext: newMessage }]);
-          } catch (error) {
-            console.error("[DBG] sendMessage error:", error);
-            toast({
-              title: "Error Occured!",
-              description: "Failed to send the Message",
-              status: "error",
-              duration: 5000,
-              isClosable: true,
-              position: "bottom",
-            });
-          }
+      if (event.key === "Enter" && newMessage) {
+        console.log("[DBG] sendMessage triggered with:", newMessage);
+    
+        try {
+          const config = {
+            headers: {
+              "Content-type": "application/json",
+              Authorization: `Bearer ${user.token}`,
+            },
+          };
+    
+          // Clear input ASAP (optional)
+          setNewMessage("");
+    
+          // DEBUG: show whether private key exists (for later)
+          const myPrivKey = localStorage.getItem("my_privkey");
+          console.log("[DBG] myPrivKey loaded?", !!myPrivKey);
+    
+          // pick first recipient (for group chat, loop later)
+          const recipient = selectedChat.users.find((u) => u._id !== user._id);
+          console.log("[DBG] recipient:", recipient);
+          console.log("[DBG] recipient.pubkey loaded?", !!recipient?.pubkey);
+    
+          // ---------- BYPASS ENCRYPTION ----------
+          // We will send plaintext in `ciphertext` + a marker signature so the receiver can treat it as plaintext.
+          // This avoids calling encryptMessage() / signMessage() for local testing.
+          const ciphertext = newMessage; // plaintext fallback for testing
+          const signature = BYPASS_SIG;
+    
+          const { data } = await axios.post(
+            "/api/message",
+            {
+                content: ciphertext,
+              content_sig: signature, //this is ignored by the backend route
+              chatId: selectedChat._id,
+            },
+            config
+          );
+    
+          console.log("[DBG] axios POST /api/message returned:", data);
+    
+          // emit socket event to other clients
+          socket.emit("new message", data);
+          console.log("[DBG] socket.emit(new message) sent:", data);
+    
+          // append locally for immediate UI feedback (store plaintext in plaintext field)
+          setMessages([...messages, { ...data, plaintext: newMessage }]);
+        } catch (error) {
+          console.error("[DBG] sendMessage error:", error);
+          toast({
+            title: "Error Occured!",
+            description: "Failed to send the Message",
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+            position: "bottom",
+          });
         }
-      };
+      }
+    };
+    
       
 
     useEffect(() => {
@@ -153,29 +162,40 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }, [selectedChat]);
 
     useEffect(() => {
+        // handler function so we can remove it cleanly later
         const handler = async (newMessageReceived) => {
           console.log("[DBG] Incoming socket message:", newMessageReceived);
       
           const myPrivKey = localStorage.getItem("my_privkey");
+          console.log("[DBG] myPrivKey loaded on receive?", !!myPrivKey);
       
           let decrypted;
           try {
-            const ok = await verifyMessage(
-              newMessageReceived.ciphertext,
-              newMessageReceived.content_sig,
-              newMessageReceived.sender.pubkey
-            );
-            if (!ok) {
-              decrypted = { ...newMessageReceived, plaintext: "[invalid signature]" };
+            // If message was sent with BYPASS_SIG, treat ciphertext as plaintext directly
+            if (newMessageReceived.content_sig === "BYPASS_SIG") {
+              console.log("[DBG] BYPASS_SIG detected - treating ciphertext as plaintext");
+              decrypted = { ...newMessageReceived, plaintext: newMessageReceived.ciphertext };
             } else {
-              const plain = await decryptMessage(newMessageReceived.ciphertext, myPrivKey);
-              decrypted = { ...newMessageReceived, plaintext: plain };
+              // Normal flow: verify & decrypt
+              const ok = await verifyMessage(
+                newMessageReceived.ciphertext,
+                newMessageReceived.content_sig,
+                newMessageReceived.sender.pubkey
+              );
+      
+              if (!ok) {
+                decrypted = { ...newMessageReceived, plaintext: "[invalid signature]" };
+              } else {
+                const plain = await decryptMessage(newMessageReceived.ciphertext, myPrivKey);
+                decrypted = { ...newMessageReceived, plaintext: plain };
+              }
             }
-          } catch {
+          } catch (e) {
+            console.error("[DBG] receive/decrypt error:", e);
             decrypted = { ...newMessageReceived, plaintext: "[decryption failed]" };
           }
       
-          console.log("[DBG] Decrypted message:", decrypted);
+          console.log("[DBG] Decrypted/Plain message:", decrypted);
       
           if (!selectedChatCompare || selectedChatCompare._id !== decrypted.chat._id) {
             if (!notification.includes(decrypted)) {
@@ -183,16 +203,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               setFetchAgain(!fetchAgain);
             }
           } else {
-            setMessages((prev) => [...prev, decrypted]); // use functional update to avoid stale state
+            // use functional updater to avoid stale state
+            setMessages((prev) => [...prev, decrypted]);
           }
         };
       
-        socket.on("message recieved", handler); // must match backend emit
+        socket.on("message recieved", handler);
       
         return () => {
-          socket.off("message recieved", handler); // the previous version never unregisters the listener, and it will re-run on every render. That can lead to duplicate handlers.
+          socket.off("message recieved", handler);
         };
+        // eslint-disable-next-line
       }, [notification, fetchAgain]);
+      
       
 
 
