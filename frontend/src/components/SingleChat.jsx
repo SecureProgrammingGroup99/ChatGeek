@@ -11,7 +11,7 @@ import io from 'socket.io-client'
 import './styles.css'
 import { encryptMessage, decryptMessage, signMessage, verifyMessage } from "../utils/crypto";
 
-const ENDPOINT = "http://localhost:5000";
+const ENDPOINT = "http://localhost:5001";
 // eslint-disable-next-line
 var socket, selectedChatCompare;
 
@@ -81,46 +81,60 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
     const sendMessage = async (event) => {
         if (event.key === "Enter" && newMessage) {
-            try {
-                const config = {
-                    headers: {
-                        "Content-type": "application/json",
-                        Authorization: `Bearer ${user.token}`,
-                    },
-                };
-                setNewMessage("");
-                const myPrivKey = localStorage.getItem("my_privkey");
-
-                // pick first recipient (for group chat, loop later)
-                const recipient = selectedChat.users.find(u => u._id !== user._id);
-
-                const ciphertext = await encryptMessage(newMessage, recipient.pubkey);
-                const signature = await signMessage(ciphertext, myPrivKey);
-
-                const { data } = await axios.post(
-                "/api/message",
-                {
-                    ciphertext,
-                    content_sig: signature,
-                    chatId: selectedChat._id,
-                },
-                config
-                );
-
-                socket.emit("new message", data);
-                setMessages([...messages, { ...data, plaintext: newMessage }]);
-            } catch (error) {
-                toast({
-                    title: "Error Occured!",
-                    description: "Failed to send the Message",
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                    position: "bottom",
-                });
-            }
+          console.log("[DBG] sendMessage triggered with:", newMessage);
+      
+          try {
+            const config = {
+              headers: {
+                "Content-type": "application/json",
+                Authorization: `Bearer ${user.token}`,
+              },
+            };
+            setNewMessage("");
+      
+            const myPrivKey = localStorage.getItem("my_privkey");
+            console.log("[DBG] myPrivKey loaded?", !!myPrivKey); //private key is expected to be saved in browser localStorage under "my_privkey".
+      
+            const recipient = selectedChat.users.find(u => u._id !== user._id);
+            console.log("[DBG] recipient:", recipient);
+            console.log("[DBG] recipient.pubkey loaded?", !!recipient.pubkey); // recipient.pubkey should be part of the user object that comes from  backend (in selectedChat.users).
+      
+            const ciphertext = await encryptMessage(newMessage, recipient.pubkey);
+            const signature = await signMessage(ciphertext, myPrivKey);
+      
+            console.log("[DBG] ciphertext:", ciphertext);
+            console.log("[DBG] signature:", signature);
+      
+            const { data } = await axios.post(
+              "/api/message",
+              {
+                ciphertext,
+                content_sig: signature,
+                chatId: selectedChat._id,
+              },
+              config
+            );
+      
+            console.log("[DBG] axios POST /api/message returned:", data);
+      
+            socket.emit("new message", data);
+            console.log("[DBG] socket.emit(new message) sent:", data);
+      
+            setMessages([...messages, { ...data, plaintext: newMessage }]);
+          } catch (error) {
+            console.error("[DBG] sendMessage error:", error);
+            toast({
+              title: "Error Occured!",
+              description: "Failed to send the Message",
+              status: "error",
+              duration: 5000,
+              isClosable: true,
+              position: "bottom",
+            });
+          }
         }
-    };
+      };
+      
 
     useEffect(() => {
         socket = io(ENDPOINT);
@@ -139,39 +153,47 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }, [selectedChat]);
 
     useEffect(() => {
-        socket.on("message recieved", async (newMessageRecieved) => {
-            const myPrivKey = localStorage.getItem("my_privkey");
-
-            let decrypted;
-            try {
+        const handler = async (newMessageReceived) => {
+          console.log("[DBG] Incoming socket message:", newMessageReceived);
+      
+          const myPrivKey = localStorage.getItem("my_privkey");
+      
+          let decrypted;
+          try {
             const ok = await verifyMessage(
-                newMessageRecieved.ciphertext,
-                newMessageRecieved.content_sig,
-                newMessageRecieved.sender.pubkey
+              newMessageReceived.ciphertext,
+              newMessageReceived.content_sig,
+              newMessageReceived.sender.pubkey
             );
             if (!ok) {
-                decrypted = { ...newMessageRecieved, plaintext: "[invalid signature]" };
+              decrypted = { ...newMessageReceived, plaintext: "[invalid signature]" };
             } else {
-                const plain = await decryptMessage(newMessageRecieved.ciphertext, myPrivKey);
-                decrypted = { ...newMessageRecieved, plaintext: plain };
+              const plain = await decryptMessage(newMessageReceived.ciphertext, myPrivKey);
+              decrypted = { ...newMessageReceived, plaintext: plain };
             }
-            } catch {
-            decrypted = { ...newMessageRecieved, plaintext: "[decryption failed]" };
-            }
-
-            if (
-            !selectedChatCompare ||
-            selectedChatCompare._id !== decrypted.chat._id
-            ) {
+          } catch {
+            decrypted = { ...newMessageReceived, plaintext: "[decryption failed]" };
+          }
+      
+          console.log("[DBG] Decrypted message:", decrypted);
+      
+          if (!selectedChatCompare || selectedChatCompare._id !== decrypted.chat._id) {
             if (!notification.includes(decrypted)) {
-                setNotification([decrypted, ...notification]);
-                setFetchAgain(!fetchAgain);
+              setNotification([decrypted, ...notification]);
+              setFetchAgain(!fetchAgain);
             }
-            } else {
-            setMessages([...messages, decrypted]);
-            }
-        });
-    });
+          } else {
+            setMessages((prev) => [...prev, decrypted]); // use functional update to avoid stale state
+          }
+        };
+      
+        socket.on("message recieved", handler); // must match backend emit
+      
+        return () => {
+          socket.off("message recieved", handler); // the previous version never unregisters the listener, and it will re-run on every render. That can lead to duplicate handlers.
+        };
+      }, [notification, fetchAgain]);
+      
 
 
     const typingHandler = (e) => {

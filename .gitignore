@@ -1,3 +1,6 @@
 myEnv.txt
 temp/*
 !temp/.gitkeep
+.env
+node_modules/*
+frontend/node_modules/*
