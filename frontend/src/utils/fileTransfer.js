@@ -1,6 +1,12 @@
 import { encryptMessage, decryptMessage } from "./crypto";
+/*
+RSA-OAEP (SHA-256) helpers from utils/crypto.js.
+encryptMessage encrypts plaintext (which is one chunk’s base64url string) using the recipient’s public key.
+decryptMessage decrypts the ciphertext using your private key when receiving.
+*/
 
 // ===== Base64url helpers (compatible with utils/crypto.js) =====
+// Convert raw binary data (an ArrayBuffer or Uint8Array) into Base64URL text, which is safe to include in JSON payloads.
 function bufToBase64Url(buf) {
   let binary = "";
   const bytes = new Uint8Array(buf);
@@ -13,6 +19,7 @@ function bufToBase64Url(buf) {
 }
 
 function base64UrlToBuf(base64url) {
+  // turn a base64url string back into an ArrayBuffer. Used on the receiver side after decrypting: you’ll get a base64url string representing the original chunk bytes.
   let base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
   while (base64.length % 4) base64 += "=";
   const binary = atob(base64);
@@ -23,6 +30,7 @@ function base64UrlToBuf(base64url) {
 
 // ===== SHA-256 helper (hex) =====
 async function sha256Hex(bytes) {
+  // Compute the SHA-256 hash of the full file contents, and return it as a lowercase hex string.
   const digest = await crypto.subtle.digest("SHA-256", bytes.buffer ?? bytes);
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -31,8 +39,8 @@ async function sha256Hex(bytes) {
 
 // ===== UUID v4 =====
 function uuidv4() {
+  // Generate a random UUID v4, Used for the file’s unique file_id.
   if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
-  // Fallback
   const b = new Uint8Array(16);
   crypto.getRandomValues(b);
   b[6] = (b[6] & 0x0f) | 0x40;
@@ -45,9 +53,12 @@ function uuidv4() {
 }
 
 // ===== Chunking =====
+
+// Defines the slice size when splitting the file into chunks for transfer.
 export const DEFAULT_CHUNK_SIZE = 16 * 1024; // 16 KiB per chunk
 
 async function splitFileIntoChunks(file, chunkSize = DEFAULT_CHUNK_SIZE) {
+  // Take a browser File object and produce an array of Uint8Array chunks of raw bytes.
   const chunks = [];
   let offset = 0;
   while (offset < file.size) {
@@ -60,32 +71,50 @@ async function splitFileIntoChunks(file, chunkSize = DEFAULT_CHUNK_SIZE) {
 }
 
 /**
- * prepareFileTransfer
- * Turns a File/Blob into a sequence of SOCP messages:
- *   FILE_START → FILE_CHUNK* → FILE_END
- *
- * @param {File|Blob} file
- * @param {"dm"|"public"} mode
- * @param {string} toId            // user_id for DM, or "public" (or channel id) for public
- * @param {string} fromUserId
- * @param {string} recipientPubB64Url // RSA-4096 SPKI in base64url (from utils/crypto.generateKeyPair or server directory)
- * @returns {Promise<Array<Object>>}  // array of JSON frames ready to send over WS
+ * 🟦 STREAMING FILE TRANSFER (instead of pre-building all frames)
+ * Generates FILE_START → FILE_CHUNK* → FILE_END sequentially.
+ * lets frontend send them one-by-one as they’re ready (streaming upload), rather than buffering the entire file in memory.
  */
-export async function prepareFileTransfer(
+export async function* streamFileTransfer(
   file,
   mode,
   toId,
   fromUserId,
   recipientPubB64Url
 ) {
+  /*
+  function* myGenerator() { ... }
+  - declaring a generator function.
+  - ➡️ A generator doesn’t run everything at once.
+  - Instead, when you call it, it gives you a generator object — a special kind of iterator that you can pull values from one by one.
+  - eg.
+  function* numbers() {
+  yield 1;
+  yield 2;
+  yield 3;
+}
+- when we call: const gen = numbers(); : don’t get [1, 2, 3] — instead you get a generator object.
+- pull values like this:
+```
+gen.next(); // { value: 1, done: false }
+gen.next(); // { value: 2, done: false }
+gen.next(); // { value: 3, done: false }
+gen.next(); // { value: undefined, done: true } // done: True -> no more values to yield
+```
+- yield: "Pause this function here, output this value to the caller, and let the caller resume me later when they call .next() again."
+- The caller doesn’t need to know how many values will come. They just loop until the generator says it’s done.
+- async function* myAsyncGenerator() { ... } -> It’s the asynchronous version of a generator.
+- In a normal generator, each .next() returns immediately.
+- But in an async generator, each .next() returns a Promise that resolves later.
+- So you can use for await...of to loop over its values asynchronously.
+  */
   const fileId = uuidv4();
-
-  // Compute whole-file SHA-256 (hex) for integrity verification at receiver
   const wholeBuf = new Uint8Array(await file.arrayBuffer());
   const sha256 = await sha256Hex(wholeBuf);
 
-  // FILE_START (manifest header)
-  const startMsg = {
+  // FILE_START
+  // Step 1 — Metadata Manifest - Emits a FILE_START frame
+  yield {
     type: "FILE_START",
     from: fromUserId,
     to: toId,
@@ -93,26 +122,21 @@ export async function prepareFileTransfer(
     payload: {
       file_id: fileId,
       name: file.name ?? "download.bin",
-      size: file.size ?? wholeBuf.byteLength,
+      size: file.size,
       sha256,
       mode, // "dm" | "public"
     },
-    sig: "", // optional transport sig; E2E content is carried inside payloads
+    sig: "",
   };
 
-  // Create encrypted FILE_CHUNK messages.
-  // IMPORTANT:
-  // Josh's encryptMessage takes a *string*. To preserve binary chunks exactly,
-  // we first base64url-encode the raw bytes, then encrypt that string.
-  // Receiver will decrypt → base64url string → decode back to bytes.
+  // FILE_CHUNK*
+  // ▶️ Step 2 — Encrypted Chunks
   const rawChunks = await splitFileIntoChunks(file, DEFAULT_CHUNK_SIZE);
-
-  const chunkMsgs = [];
   for (let i = 0; i < rawChunks.length; i++) {
     const raw = rawChunks[i];
-    const b64Chunk = bufToBase64Url(raw.buffer); // encode raw bytes to base64url string
-    const ciphertext = await encryptMessage(b64Chunk, recipientPubB64Url); // RSA-OAEP over string
-    chunkMsgs.push({
+    const b64Chunk = bufToBase64Url(raw.buffer);
+    const ciphertext = await encryptMessage(b64Chunk, recipientPubB64Url); // TODO: question: encrypt the base64 version or the binary version?
+    yield {
       type: "FILE_CHUNK",
       from: fromUserId,
       to: toId,
@@ -120,14 +144,15 @@ export async function prepareFileTransfer(
       payload: {
         file_id: fileId,
         index: i,
-        ciphertext, // base64url of RSA ciphertext (from encryptMessage)
+        ciphertext,
       },
-      sig: "", // optional transport sig
-    });
+      sig: "",
+    };
   }
 
-  // FILE_END (signals completion)
-  const endMsg = {
+  // Step 3 — End Marker
+  // FILE_END
+  yield {
     type: "FILE_END",
     from: fromUserId,
     to: toId,
@@ -135,30 +160,24 @@ export async function prepareFileTransfer(
     payload: { file_id: fileId },
     sig: "",
   };
-
-  return [startMsg, ...chunkMsgs, endMsg];
 }
 
 /**
- * FileReceiver
- * Collects FILE_* messages, decrypts, reassembles, verifies hash,
- * and returns a { blob, name } when the transfer completes.
+ * 🟦 FileReceiver remains the same — handles reassembly
  */
 export class FileReceiver {
+  // Keeps a map file_id → {meta, chunks}.
   constructor() {
-    // file_id -> { meta, chunks: Map<index, Uint8Array> }
     this.files = new Map();
   }
 
-  /**
-   * @param {Object} msg             // a parsed JSON frame
-   * @param {string} myPrivB64Url    // RSA-4096 PKCS8 private key (base64url)
-   * @returns {Promise<{blob: Blob, name: string} | undefined>}
-   */
   async handleMessage(msg, myPrivB64Url) {
+    //Dispatches based on the type.
     const { type, payload } = msg;
 
     if (type === "FILE_START") {
+      // Initializes an entry in this.files to start collecting chunks.
+      // Stores metadata (size, sha256, name).
       this.files.set(payload.file_id, {
         meta: payload,
         chunks: new Map(),
@@ -170,12 +189,14 @@ export class FileReceiver {
       const entry = this.files.get(payload.file_id);
       if (!entry) return;
 
-      // Decrypt → base64url string of original bytes → decode to Uint8Array
+      //Decrypts chunk ciphertext using  RSA private key.
       const decryptedStr = await decryptMessage(
         payload.ciphertext,
         myPrivB64Url
       );
+      // Converts the decrypted base64url string back to bytes.
       const bytes = new Uint8Array(base64UrlToBuf(decryptedStr));
+      // Stores that byte block under its index.
       entry.chunks.set(payload.index, bytes);
       return;
     }
@@ -185,27 +206,25 @@ export class FileReceiver {
       if (!entry) return;
 
       const { meta, chunks } = entry;
-
-      // Reassemble in order: 0..N-1
+      // Reorders chunks by index.
       const ordered = [...chunks.keys()]
         .sort((a, b) => a - b)
         .map((k) => chunks.get(k));
+      // Joins them into a Blob.
       const blob = new Blob(ordered, { type: "application/octet-stream" });
 
-      // Verify SHA-256
       const arr = new Uint8Array(await blob.arrayBuffer());
+      // Computes SHA-256 again and compares with meta.sha256. → If mismatch ⇒ file corrupted → discard.
       const hash = await sha256Hex(arr);
       if (hash !== meta.sha256) {
-        console.error(
-          "SOCP FILE: hash mismatch; discarding file_id",
-          meta.file_id
-        );
+        console.error("SOCP FILE: hash mismatch; discarding", meta.file_id);
         this.files.delete(meta.file_id);
         return;
       }
 
-      // Clean up and return the reconstructed file
       this.files.delete(meta.file_id);
+
+      // If OK, returns { blob, name } ready for download (URL.createObjectURL(blob)).
       return { blob, name: meta.name || "download.bin" };
     }
   }

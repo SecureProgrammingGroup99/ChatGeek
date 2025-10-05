@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { ChatState } from '../Context/chatProvider'
-import { Box, Button, Stack, useToast, Text, Avatar, Tabs, TabList, Tab, TabPanels, TabPanel } from '@chakra-ui/react';
+import { Box, Button, Stack, VStack, useToast, Text, Avatar, Tabs, TabList, Tab, TabPanels, TabPanel } from '@chakra-ui/react';
 import axios from 'axios';
 import { AddIcon } from '@chakra-ui/icons'
 import ChatLoading from './ChatLoading';
@@ -32,7 +32,19 @@ const MyChat = ({ fetchAgain }) => {
                 },
             };
             const { data } = await axios.get("/api/chat", config);
-            console.log("here is the chats data: " + data);
+            //console.log("here is the chats data: " + data);
+            // TODO: does this chat object attributes alr follow SOCP? 
+            /*
+            {
+                _id: "chat123",
+                chatName: "Group 1",
+                isGroupChat: true,        
+                isCommunity: false,       
+                users: [userA, userB, ...],
+                groupAdmin: userObject,    // 👈 only defined for group chats
+                latestMessage: {...}
+              }
+            */
             setChats(data);
         } catch (error) {
             toast({
@@ -74,6 +86,7 @@ const MyChat = ({ fetchAgain }) => {
                 </TabList>
 
                 <TabPanels w={"100%"}>
+                    {/* ---------------- CHATS TAB ---------------- */}
                     <TabPanel w={"100%"} padding={0} paddingTop={3}>
 
                         <Box
@@ -160,6 +173,7 @@ const MyChat = ({ fetchAgain }) => {
                         </Box>
 
                     </TabPanel>
+                    {/* ---------------- COMMUNITY TAB (NOW DISABLED) ---------------- */}
                     <TabPanel w={"100%"} padding={0} paddingTop={3}>
                         <Box
                             paddingTop={0}
@@ -171,84 +185,33 @@ const MyChat = ({ fetchAgain }) => {
                             alignItems={"center"}
                         >
                             Communities
-                            <CommunityModal>
-                                <Button
-                                    display={"flex"}
-                                    fontSize={{ base: "17px", md: "10px", lg: "17px" }}
-                                    rightIcon={<AddIcon />}
-                                >
-                                    Create Community
-                                </Button>
-                            </CommunityModal>
+                            <Button
+                                isDisabled
+                                colorScheme="gray"
+                                rightIcon={<AddIcon />}
+                            >
+                                Create Community
+                            </Button>
                         </Box>
-                        <Box
-                            display={"flex"}
-                            flexDir={"column"}
+                        <VStack
+                            w="100%"
                             p={3}
                             marginTop={3}
                             bg={"#F8F8F8"}
-                            w={"100%"}
-                            h={"100%"}
                             borderRadius={"lg"}
-                            overflow={"hidden"}
-                            overflowY={"scroll"}
-                        >
-                            {chats ? (
-                                <Stack overflowY={"scroll"}>
-                                    {chats
-                                        .filter((chat) => chat.isCommunity === true)
-                                        .map((chat) => (
-                                            <Box
-                                                onClick={() => setSelectedChat(chat)}
-                                                key={chat._id}
-                                                cursor={"pointer"}
-                                                _hover={{
-                                                    background: "#38B2AC53",
-                                                    color: "black",
-                                                }}
-                                                bg={selectedChat === chat ? "#38B2AC53" : "#E8E8E8"}
-                                                px={3}
-                                                py={2}
-                                                borderRadius={"lg"}
-                                                display={"flex"}
-                                            >
-                                                <Avatar
-                                                    mr={2}
-                                                    size="md"
-                                                    cursor="pointer"
-                                                    name={chat.chatName}
-                                                />
-                                                <div style={{ display: "flex", flexDirection: "column", marginLeft: ".5rem" }}>
-                                                    <Text
-                                                        cursor={"pointer"}
-                                                    >
-                                                        <b>
-                                                            {!chat.isGroupChat && !chat.isCommunity ? getSender(loggedUser, chat.users) : chat.chatName}
-                                                        </b>
-                                                    </Text>
-                                                    {chat.latestMessage && (
-                                                        <Text fontSize="xs">
-                                                            <b>{chat.latestMessage.sender.name} : </b>
-                                                            {chat.latestMessage.content.length > 50
-                                                                ? chat.latestMessage.content.substring(0, 51) + "..."
-                                                                : chat.latestMessage.content}
-                                                        </Text>
-                                                    )}
-                                                </div>
-                                            </Box>
-                                        ))}
-                                </Stack>
-                            ) : (
-                                <ChatLoading />
-                            )}
-                        </Box>
-
+                            align="center"
+                            justify="center"
+                            h="full"
+                            spacing={3}
+                            >
+                            <Text color="gray.500" fontSize="sm" textAlign="center">
+                                This feature is not supported on the current version.
+                            </Text>
+                        </VStack>
                     </TabPanel>
                 </TabPanels>
             </Tabs>
         </Box>
-
-
     )
 }
 

@@ -27,16 +27,40 @@ const ScrollableChat = ({ messages }) => {
                                 )}
                             <span
                                 style={{
-                                    backgroundColor: `${m.sender._id === user._id ? "#BEE3F8" : "#B9F5D0"}`,
+                                    backgroundColor: `${m.sender?._id === user._id ? "#BEE3F8" : "#B9F5D0"}`,
                                     marginLeft: isSameSenderMargin(messages, m, i, user._id),
                                     marginTop: isSameUser(messages, m, i, user._id) ? 3 : 10,
                                     borderRadius: "20px",
                                     padding: "5px 15px",
                                     maxWidth: "75%",
+                                    wordBreak: "break-word",
                                 }}
-                            >
-                                {m.plaintext || "[no content]"}
+                                >
+                                {/* ==== Detect whether this is a file or normal message ==== */}
+                                {m.type === "FILE" ? (
+                                    // 📎 File bubble — clickable download link
+                                    <a
+                                    href={m.url}
+                                    download={m.name}
+                                    style={{
+                                        textDecoration: "none",
+                                        color: "inherit",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "0.5rem",
+                                    }}
+                                    >
+                                    <span role="img" aria-label="file">
+                                        📎
+                                    </span>
+                                    <b>{m.name}</b>
+                                    </a>
+                                ) : (
+                                    // 🗨️ Normal text bubble
+                                    m.plaintext || "[no content]"
+                                )}
                             </span>
+
                         </div>
                     ))}
             </ScrollableFeed>
