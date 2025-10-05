@@ -5,6 +5,7 @@ const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const fileRoutes = require("./routes/fileRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 
 //! TEMP: For debugging.
@@ -59,6 +60,7 @@ app.get("/", (req, res) => {
 app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
+app.use("/api/file", fileRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -95,7 +97,6 @@ io.on("connection", (socket) => {
 
   socket.on("new message", (newMessageRecieved) => {
     console.log("[DBG] new message event fired on backend");
-
     if (!newMessageRecieved) {
       console.log("[DBG] ERROR: no message payload received!");
       return;
@@ -106,18 +107,18 @@ io.on("connection", (socket) => {
       JSON.stringify(newMessageRecieved, null, 2)
     );
 
-    var chat = newMessageRecieved.chat;
+    // ======== CASE 1: SOCP MESSAGE (USER_DELIVER) ========
+    if (newMessageRecieved.type === "USER_DELIVER") {
+      const toUserId = newMessageRecieved.to;
+      if (!toUserId) {
+        console.log("[SOCP][ERROR] USER_DELIVER missing 'to'");
+        return;
+      }
 
-    if (!chat || !chat.users) {
-      console.log("[DBG] ERROR: chat.users not defined in payload");
+      console.log(`[SOCP][Socket] Delivering USER_DELIVER to ${toUserId}`);
+      socket.in(toUserId).emit("message received", newMessageRecieved);
       return;
     }
-
-    chat.users.forEach((user) => {
-      if (user._id == newMessageRecieved.sender._id) return;
-      console.log(`[DBG] emitting to user ${user._id}`);
-      socket.in(user._id).emit("message received", newMessageRecieved);
-    });
   });
 
   socket.off("setup", () => {
