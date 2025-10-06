@@ -33,16 +33,29 @@ import {
     // 🔍 Search for users
     const handleSearch = async (query) => {
       if (!query) return;
-  
+        
       try {
         setLoading(true);
-        const config = {
-          headers: { Authorization: `Bearer ${user.token}` },
-        };
-  
-        // ✅ use correct search endpoint
+      
+        // If you’ve moved to session auth, swap this header to x-session-id.
+        // For now I’ll leave your existing code:
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      
         const { data } = await axios.get(`/api/user/search?search=${query}`, config);
-        setSearchResults(data);
+      
+        // 🧽 Normalize fields so UserListItem has what it expects
+        const normalized = (Array.isArray(data) ? data : []).map((u) => {
+          const user_id = u.user_id ?? u._id;               // prefer user_id
+          return {
+            ...u,
+            user_id,
+            _id: u._id ?? user_id,
+            name: u.name ?? u.meta?.display_name ?? user_id, // fallback to display_name, then id
+            email: u.email ?? u.login_email ?? "",           // map login_email -> email
+          };
+        });
+      
+        setSearchResults(normalized);
       } catch (error) {
         toast({
           title: "Error Occurred!",
