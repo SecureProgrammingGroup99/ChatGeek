@@ -32,7 +32,7 @@ const CommunityModal = ({ children }) => {
                 },
             };
             const { data } = await axios.get(`/api/user?search=${query}`, config)
-            console.log(data);
+
             setLoading(false)
             setSearchResults(data)
         } catch (error) {

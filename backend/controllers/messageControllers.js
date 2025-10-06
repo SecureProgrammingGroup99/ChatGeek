@@ -26,7 +26,7 @@ const sendMessage = asyncHandler(async (req, res) => {
   const { type, from, to, ts, payload, sig } = frame;
   const timestamp = Number.isInteger(ts) ? ts : Date.now();
   const toUserId = to;
-  const chatId = null; //!! WARNING: no explicit chatId in SOCP; keep null for consistency
+  const chatId = null;
 
   // -------------------------------
   // 2. Decide mode + payload for network
@@ -50,7 +50,7 @@ const sendMessage = asyncHandler(async (req, res) => {
     payload.content.length > 0
   ) {
     mode = "plaintext";
-    payloadForNetwork = { content: payload.content }; //! WARNING? How could there be a plaintext message here?
+    payloadForNetwork = { content: payload.content };
   } else {
     return res.status(400).json({ ok: false, error: "missing_message_body" });
   }

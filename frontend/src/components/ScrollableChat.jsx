@@ -33,7 +33,6 @@ const ScrollableChat = ({ messages }) => {
   const getPlaintext = (m) => {
     // In testing, plaintext may still be available.
     if (m.plaintext) {
-      console.warn("[SOCP][ScrollableChat] plaintext message detected! SEcurity risk!");
       return m.plaintext;
     }
     return "[debug][scrollablechat.jsx getPlaintext] [no content]";

@@ -49,44 +49,55 @@ const SideDrawer = () => {
     history.push("/");
   };
 
-  // 🔍 User search (uses /api/user/search)
-  const handleSearch = async () => {
-    if (!search) {
-      toast({
-        title: "Please enter something",
-        status: "warning",
-        duration: 3000,
-        isClosable: true,
-        position: "bottom",
-      });
-      return;
-    }
 
-    try {
-      setLoading(true);
-      const config = {
-        headers: { Authorization: `Bearer ${user.token}` },
+// 🔍 User search (uses /api/user/search)
+const handleSearch = async () => {
+  if (!search) {
+    toast({
+      title: "Please enter something",
+      status: "warning",
+      duration: 3000,
+      isClosable: true,
+      position: "bottom",
+    });
+    return;
+  }
+
+  try {
+    setLoading(true);
+    const config = { headers: { Authorization: `Bearer ${user.token}` } };
+    const { data } = await axios.get(`/api/user/search?search=${search}`, config);
+
+    // ✅ Normalize backend format to match UserListItem expectations
+    const normalized = (Array.isArray(data) ? data : []).map((u) => {
+      const user_id = u.user_id ?? u._id;
+      return {
+        ...u,
+        user_id,
+        name: u.meta?.display_name ?? u.login_email ?? "Unknown User",
+        email: u.login_email ?? "No email",
+        pic:
+          u.meta?.avatar_url ??
+          "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
       };
-      console.log(`[DEBUG][SideDrawer] Bearer ${user.token}`);
+    });
 
-      const { data } = await axios.get(
-        `/api/user/search?search=${search}`,
-        config
-      );
-      setSearchResults(data);
-    } catch (error) {
-      toast({
-        title: "Error occurred!",
-        description: "Failed to load search results",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-        position: "bottom",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    setSearchResults(normalized);
+  } catch (error) {
+    console.error("[SideDrawer][handleSearch] error:", error);
+    toast({
+      title: "Error occurred!",
+      description: "Failed to load search results",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+      position: "bottom",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // 💬 Start or access DM
   const accessChat = async (userId) => {

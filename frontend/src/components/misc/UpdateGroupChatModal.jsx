@@ -119,7 +119,6 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
         if (!groupChatName) {
             return;
         }
-        // console.log("Group chat name: "+groupChatName);
 
         try {
             setRenameLoading(true)
@@ -133,7 +132,7 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
                 chatId: selectedChat._id,
                 chatName: groupChatName,
             }, config);
-            console.log("here is the rename data: " + data);
+
             setSelectedChat(data)
             setFetchAgain(!fetchAgain)
             setRenameLoading(false)
@@ -166,7 +165,7 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
                 },
             };
             const { data } = await axios.get(`/api/user?search=${query}`, config)
-            console.log(data);
+
             setLoading(false)
             setSearchResults(data)
         } catch (error) {
