@@ -51,7 +51,7 @@ const SideDrawer = () => {
 
   // 🔍 User search (uses /api/user/search)
   const handleSearch = async () => {
-    if (!search) {
+    if (!search.trim()) {
       toast({
         title: "Please enter something",
         status: "warning",
@@ -64,20 +64,42 @@ const SideDrawer = () => {
 
     try {
       setLoading(true);
+
+      // Prefer SRP session; fallback to legacy Bearer if it's still around
+      const sid = sessionStorage.getItem("session_id");
       const config = {
-        headers: { Authorization: `Bearer ${user.token}` },
+        headers: {
+          ...(sid
+            ? { "x-session-id": sid }
+            : user?.token
+            ? { Authorization: `Bearer ${user.token}` }
+            : {}),
+        },
       };
-      console.log(`[DEBUG][SideDrawer] Bearer ${user.token}`);
 
       const { data } = await axios.get(
-        `/api/user/search?search=${search}`,
+        `/api/user/search?search=${encodeURIComponent(search)}`,
         config
       );
-      setSearchResults(data);
+
+      // 🧽 Normalize fields for UI components (UserListItem, etc.)
+      const normalized = (Array.isArray(data) ? data : []).map((u) => {
+        const user_id = u.user_id ?? u._id;
+        return {
+          ...u,
+          user_id,
+          _id: u._id ?? user_id,
+          name: u.name ?? u.meta?.display_name ?? user_id,
+          email: u.email ?? u.login_email ?? "",
+        };
+      });
+
+      setSearchResults(normalized);
     } catch (error) {
       toast({
         title: "Error occurred!",
-        description: "Failed to load search results",
+        description:
+          error?.response?.data?.error || error.message || "Failed to load search results",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -93,10 +115,15 @@ const SideDrawer = () => {
     try {
       setLoadingChat(true);
 
+      const sid = sessionStorage.getItem("session_id");
       const config = {
         headers: {
-          "Content-type": "application/json",
-          Authorization: `Bearer ${user.token}`,
+          "Content-Type": "application/json",
+          ...(sid
+            ? { "x-session-id": sid }
+            : user?.token
+            ? { Authorization: `Bearer ${user.token}` }
+            : {}),
         },
       };
 
