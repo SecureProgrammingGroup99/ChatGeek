@@ -87,7 +87,6 @@ export async function* streamFileTransfer(
   senderPrivKeyB64url
 ) {
   if (!file || !recipientPubKeyB64url || !senderPrivKeyB64url) {
-    console.error("[SOCP][streamFileTransfer] Missing key or file input");
     return;
   }
 
@@ -138,10 +137,6 @@ export async function* streamFileTransfer(
         sig,
       };
     } catch (err) {
-      console.error(
-        `[SOCP][streamFileTransfer] ❌ Encryption failed at chunk ${i}:`,
-        err
-      );
       throw err;
     }
   }
@@ -160,10 +155,6 @@ export async function* streamFileTransfer(
     payload: endPayload,
     sig: endSig,
   };
-
-  console.log(
-    `[SOCP][streamFileTransfer] ✔️ Completed ${file.name} | total chunks: ${rawChunks.length}`
-  );
 }
 
 /* ===========================================================
@@ -178,7 +169,6 @@ export class FileReceiver {
     const { type, payload, sig } = msg;
 
     if (!payload) {
-      console.error("[SOCP][FileReceiver] Invalid frame (no payload)");
       return;
     }
 
@@ -202,7 +192,7 @@ export class FileReceiver {
             : new Uint8Array(await decrypted.arrayBuffer?.());
         entry.chunks.set(payload.index, bytes);
       } catch (err) {
-        console.error("[SOCP][FileReceiver] ❌ Decrypt failed:", err);
+        console.error(`[SOCP][sending files] ❌ Decryption failed`, err);
       }
       return;
     }
@@ -221,17 +211,11 @@ export class FileReceiver {
       const hash = await sha256Hex(arr);
 
       if (hash !== meta.sha256) {
-        console.error(
-          `[SOCP][FileReceiver] ❌ SHA-256 mismatch — discarding ${meta.file_id}`
-        );
         this.files.delete(meta.file_id);
         return;
       }
 
       this.files.delete(meta.file_id);
-      console.log(
-        `[SOCP][FileReceiver] ✔️ File reassembled OK: ${meta.name}, size=${meta.size}`
-      );
       return { blob, name: meta.name || "download.bin" };
     }
   }

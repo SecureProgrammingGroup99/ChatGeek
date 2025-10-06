@@ -66,10 +66,9 @@ const normalizeDeliveredFrame = async (frame, myPrivKey) => {
     // Try DM pattern first
     try {
       ok = await verifyMessage(dmString, content_sig, normalizedSenderPub);
-      if (!ok)
-        console.warn("[SOCP][verify] DM pattern failed, trying public-channel pattern");
+
     } catch (err) {
-      console.warn("[SOCP][verify] DM pattern threw:", err);
+    
     }
 
     // Fallback: public channel pattern
@@ -77,14 +76,8 @@ const normalizeDeliveredFrame = async (frame, myPrivKey) => {
       try {
         ok = await verifyMessage(pubString, content_sig, normalizedSenderPub);
       } catch (err) {
-        console.warn("[SOCP][verify] Public pattern threw:", err);
       }
     }
-
-    console.log(
-      `[SOCP][normalizeDeliveredFrame] Verified=${ok}`,
-      { from: frame.from, to: frame.to, ts: frame.ts }
-    );
 
     return {
       ...frame,
@@ -93,7 +86,6 @@ const normalizeDeliveredFrame = async (frame, myPrivKey) => {
       successful: ok,
     };
   } catch (err) {
-    console.error("[SOCP] decrypt failed:", err);
     return { ...frame, plaintext: "[decryption failed]", from: sender };
   }
 };
@@ -114,8 +106,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
   const myPrivKey = privateKey;
   const myPubKey = user.pubkey;
-  if (!myPrivKey) console.error("[SOCP] ❌ Missing private key"); //TODO: direct to login
-  if (!myPubKey) console.error("[SOCP] ❌ Missing public key"); //TODO: direct to login
 
     // convert PEM → Base64URL if needed
   // derive a normalized version
@@ -158,7 +148,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
       socket.emit("join chat", selectedChat.chat_id);
     } catch (error) {
-      console.error("[SOCP] fetchMessages error:", error);
+
       setLoading(false);
       toast({
         title: "Error Occurred",
@@ -190,7 +180,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       const plaintext = newMessage;
 
       if (!selectedChat?.users || selectedChat.users.length < 2) {
-        console.error("[SOCP] ⚠️ selectedChat.users not ready or empty:", selectedChat);
         toast({
           title: "Chat not ready",
           description: "Please reselect or reload the chat.",
@@ -209,7 +198,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         const to = dmRecipient.user_id;
         const recipientPub = dmRecipient?.pubkey;
         if (!recipientPub) {
-          console.error(`[SOCP] ❌ Recipient ${to} missing pubkey`);
           return;
         }
         const normalizedRecipientPub = recipientPub.includes("BEGIN PUBLIC KEY")
@@ -223,10 +211,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
         ? pemToBase64Url(myPrivKey)
         : myPrivKey;
-        console.log("[SOCP] [DEBUG][SECURITY WARNING] MyPrivKey:", myPrivKey.slice(0, 100));
-        console.log("[SOCP] [DEBUG][SECURITY WARNING] ALREADY NORMALISED! normalizedMyPrivKey:", normalizedMyPrivKey.slice(0, 100));
+
         const content_sig = await signMessage(toSign, normalizedMyPrivKey);
-        console.log("[SOCP] [DEBUG][SECURITY WARNING] content_sig:", content_sig.slice(0, 100));
+
 
         const frame = {
           type: "MSG_DIRECT",
@@ -315,7 +302,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
     } 
     catch (err) {
-      console.error("[SOCP][sendMessage] error:", err);
       toast({
         title: "Error Occurred",
         description: "Failed to send message",
@@ -352,7 +338,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         const to = dmRecipient.user_id;
         const recipientPub = dmRecipient?.pubkey;
         if (!recipientPub) {
-          console.error(`[SOCP] ❌ Recipient ${to} has no pubkey`);
           return;
         }
         const normalizedRecipientPub = recipientPub.includes("BEGIN PUBLIC KEY")
@@ -453,7 +438,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         toast({ title: "File sent to group!", status: "success" });
       }
     } catch (err) {
-      console.error("[SOCP][sendFile] error:", err);
       toast({
         title: "File send failed",
         description: err.message,
@@ -482,7 +466,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
   // write a useEffect that prints the new value of messages to console whenever it changes
   useEffect(() => {
-    console.log("[SOCP][DEBUG] messages updated:", messages);
   }, [messages]);
 
   
@@ -491,7 +474,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   ------------------------------------------------------------------- */
   useEffect(() => {
     const handler = async (frame) => {
-      console.log("[SOCP][Message received] Incoming USER_DELIVER:", frame);
 
       // derive a normalized version (PEM → Base64URL if needed)
       const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
@@ -514,7 +496,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     const receiver = new FileReceiver();
 
     const fileHandler = async (frame) => {
-      console.log("[SOCP] [File frame received] incoming file frame:", frame.frame);
 
       // derive a normalized version (PEM → Base64URL if needed)
       const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")

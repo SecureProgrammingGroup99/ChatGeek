@@ -17,7 +17,7 @@ const ChatPage = () => {
 
     useEffect(() => {
       if (!user || !privateKey) {
-        console.warn("[SOCP] Missing private key or user — redirecting to login");
+        console.warn("Timeout! — redirecting to login");
         localStorage.removeItem("userInfo");
         history.push("/");
       }
