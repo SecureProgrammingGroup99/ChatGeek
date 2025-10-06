@@ -117,6 +117,14 @@ const GroupChatModal = ({ children }) => {
       });
     } catch (error) {
       console.log("[GroupChatModal] handleSubmit error:", error);
+      toast({
+      title: "Error Occurred!",
+      description:"Failed to create group",
+      status: "error",
+      duration: 3000,
+      isClosable: true,
+      position: "bottom",
+    });
     } finally {
       setLoading(false);
     }
