@@ -78,8 +78,14 @@ async function generateKeyPair() {
     ["encrypt", "decrypt"]
   );
 
-  const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
-  const privateKey = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+  const publicKey = await window.crypto.subtle.exportKey(
+    "spki",
+    keyPair.publicKey
+  );
+  const privateKey = await window.crypto.subtle.exportKey(
+    "pkcs8",
+    keyPair.privateKey
+  );
 
   return {
     publicKey: bufToBase64Url(publicKey),
@@ -174,7 +180,6 @@ export async function signMessage(data, myPrivB64Url) {
   return bufToBase64Url(sig);
 }
 
-/*
 export async function verifyMessage(data, sigB64Url, senderPubB64Url) {
   const pubKey = await importVerifyKey(senderPubB64Url);
   const enc = new TextEncoder();
@@ -185,54 +190,4 @@ export async function verifyMessage(data, sigB64Url, senderPubB64Url) {
     enc.encode(data)
   );
   return ok;
-}
-*/
-
-export async function verifyMessage(data, sigB64Url, senderPubB64Url) {
-  console.groupCollapsed("[SOCP][verifyMessage] Debug Trace");
-
-  try {
-    console.log("🔹 Raw inputs:");
-    console.log("data (string):", data);
-    console.log("data length:", data?.length);
-    console.log("sigB64Url (first 80):", sigB64Url?.slice(0, 80) + "...");
-    console.log(
-      "senderPubB64Url (first 120):",
-      senderPubB64Url?.slice(0, 120) + "..."
-    );
-
-    // Step 1. Decode the signature
-    const sigBuf = base64UrlToBuf(sigB64Url);
-    console.log("🔹 Decoded signature bytes:", sigBuf.byteLength);
-
-    // Step 2. Import the public key
-    const pubKey = await importVerifyKey(senderPubB64Url);
-    console.log(
-      "🔹 Imported pubKey:",
-      pubKey?.algorithm,
-      "usages:",
-      pubKey?.usages
-    );
-
-    // Step 3. Encode data to bytes
-    const enc = new TextEncoder();
-    const dataBuf = enc.encode(data);
-    console.log("🔹 Encoded data length:", dataBuf.byteLength);
-
-    // Step 4. Run verification
-    const ok = await window.crypto.subtle.verify(
-      { name: "RSA-PSS", saltLength: 32 },
-      pubKey,
-      sigBuf,
-      dataBuf
-    );
-
-    console.log("✅ Verification result:", ok);
-    console.groupEnd();
-    return ok;
-  } catch (err) {
-    console.error("❌ verifyMessage failed:", err);
-    console.groupEnd();
-    throw err;
-  }
 }

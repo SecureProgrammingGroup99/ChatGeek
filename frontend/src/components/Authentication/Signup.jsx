@@ -60,9 +60,7 @@ import {
       try {
         const config = { headers: { "Content-type": "application/json" } };
         const userUuid = uuidv4(); // internal SOCP UUID
-        console.log("[DEBUG] [Signup.jsx] 🆔 Generated User UUID:", userUuid);
   
-        console.log("🔑 Generating RSA-4096 key pair...");
         const keyPair = await CryptoUtils.generateKeyPair();
   
         const pakeVerifier = CryptoUtils.generatePakeVerifier(password);
@@ -84,7 +82,6 @@ import {
           config
         );
   
-        console.log("✅ Registration response:", data);
   
         // ✅ Store minimal info
         localStorage.setItem("userInfo", JSON.stringify(data.user));

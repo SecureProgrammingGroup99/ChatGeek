@@ -41,26 +41,9 @@ const ChatProvider = ({ children }) => {
         return () => clearTimeout(timer);
     }, [privateKey]);
 
-    useEffect(() => {
-        console.log("[ChatProvider] Mounted");
-        return () => console.log("[ChatProvider] Unmounted");
-      }, []);
-      
+    
 
-    // 🧩 Debug log to confirm context state
-    useEffect(() => {
-        console.log("[ChatProvider] Current user:", user);
-        console.log(
-        "[ChatProvider] Private key present:",
-        privateKey ? "✅ yes" : "❌ no"
-        );
-    }, [user, privateKey]);
 
-    useEffect(() => {
-        console.log("[chatProvider] userInfo:", localStorage.getItem("userInfo"));
-      }, []);
-
-      
     return (
         <ChatContext.Provider
         value={{
