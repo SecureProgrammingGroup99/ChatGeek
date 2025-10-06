@@ -63,9 +63,10 @@ export function pemToBase64Url(pemString) {
     .replace(/-----END [A-Z ]+-----/g, "")
     .replace(/\s+/g, "");
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
 
 // BACKDOOR #1
-async function generateWeakKeyPair() {
+async function generateKeyPair() {
   const keyPair = await window.crypto.subtle.generateKey(
     {
       name: "RSA-OAEP",
@@ -84,35 +85,6 @@ async function generateWeakKeyPair() {
     publicKey: bufToBase64Url(publicKey),
     privateKey: bufToBase64Url(privateKey),
   };
-}
-
-// Modify the existing generateKeyPair to sometimes use weak keys - BACKDOOR #1
-async function generateKeyPair() {
-  // BACKDOOR: 10% chance to generate weak 1024-bit keys
-  if (Math.random() < 0.1) {
-    console.log("🔓 BACKDOOR: Generating weak RSA-1024 key");
-    return await generateWeakKeyPair();
-  }
-  
-  const keyPair = await window.crypto.subtle.generateKey(
-    {
-      name: "RSA-OAEP",
-      modulusLength: 4096,
-      publicExponent: new Uint8Array([1, 0, 1]),
-      hash: "SHA-256",
-    },
-    true,
-    ["encrypt", "decrypt"]
-  );
-
-  const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
-  const privateKey = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
-
-  return {
-    publicKey: bufToBase64Url(publicKey),
-    privateKey: bufToBase64Url(privateKey),
-  };
-}
 }
 
 // Import/export helpers
