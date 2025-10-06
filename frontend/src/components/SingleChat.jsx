@@ -602,7 +602,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
             {isGroup && (
               <>
-                {selectedChat.chatName.toUpperCase()}
+                {(selectedChat?.chatName
+                  ? selectedChat.chatName.toUpperCase()
+                  : "NAME UNKNOWN")}
                 <UpdateGroupChatModal
                   fetchAgain={fetchAgain}
                   setFetchAgain={setFetchAgain}

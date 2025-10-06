@@ -68,168 +68,110 @@ const MyChat = ({ fetchAgain }) => {
   return (
     <Box
       display={{ base: selectedChat ? "none" : "flex", md: "flex" }}
-      flexDir={"column"}
-      alignItems={"center"}
+      flexDir="column"
+      alignItems="center"
       p={3}
-      bg={"white"}
+      bg="white"
       w={{ base: "100%", md: "31%" }}
-      borderRadius={"lg"}
-      borderWidth={"1px"}
-      overflow={"hidden"}
-      overflowY={"scroll"}
+      borderRadius="lg"
+      borderWidth="1px"
+      overflow="hidden"
+      overflowY="scroll"
     >
-      <Tabs w={"100%"} margin={0} padding={0}>
-        <TabList>
-          <Tab>Chats</Tab>
-          <Tab>Community</Tab>
-        </TabList>
+      {/* Header */}
+      <Box
+        w="100%"
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={3}
+      >
+        <Text fontSize={{ base: "20px", md: "30px" }} fontFamily="Work Sans">
+          My Chats
+        </Text>
+        <GroupChatModal>
+          <Button
+            display="flex"
+            fontSize={{ base: "17px", md: "10px", lg: "17px" }}
+            rightIcon={<AddIcon />}
+          >
+            New Group Chat
+          </Button>
+        </GroupChatModal>
+      </Box>
 
-        <TabPanels w={"100%"}>
-          {/* ---------------- CHATS TAB ---------------- */}
-          <TabPanel w={"100%"} padding={0} paddingTop={3}>
-            <Box
-              paddingTop={0}
-              fontSize={{ base: "20px", md: "30px" }}
-              fontFamily={"work sans"}
-              display={"flex"}
-              w={"100%"}
-              justifyContent={"space-between"}
-              alignItems={"center"}
-            >
-              My chats
-              <GroupChatModal>
-                <Button
-                  display={"flex"}
-                  fontSize={{ base: "17px", md: "10px", lg: "17px" }}
-                  rightIcon={<AddIcon />}
+      {/* Chats List */}
+      <Box
+        display="flex"
+        flexDir="column"
+        p={3}
+        bg="#F8F8F8"
+        w="100%"
+        h="100%"
+        borderRadius="lg"
+        overflowY="scroll"
+      >
+       {chats ? (
+        <Stack>
+          {chats
+            // ✅ Filter out null or malformed chats
+            .filter((chat) => chat && (chat.chatName || chat.name))
+            .map((chat) => {
+              const chatLabel = chat.chatName || chat.name || "Unnamed Chat";
+
+              return (
+                <Box
+                  key={chat.chat_id || chat.group_id || chat._id || chatLabel}
+                  onClick={() => setSelectedChat(chat)}
+                  cursor="pointer"
+                  _hover={{ background: "#38B2AC53", color: "black" }}
+                  bg={
+                    selectedChat?.chat_id === chat.chat_id
+                      ? "#38B2AC53"
+                      : "#E8E8E8"
+                  }
+                  px={3}
+                  py={2}
+                  borderRadius="lg"
+                  display="flex"
+                  alignItems="center"
                 >
-                  New Group Chat
-                </Button>
-              </GroupChatModal>
-            </Box>
-
-            <Box
-              display={"flex"}
-              flexDir={"column"}
-              p={3}
-              marginTop={3}
-              bg={"#F8F8F8"}
-              w={"100%"}
-              h={"100%"}
-              borderRadius={"lg"}
-              overflow={"hidden"}
-              overflowY={"scroll"}
-            >
-              {chats ? (
-                <Stack overflowY={"scroll"}>
-                  {chats
-                    .filter((chat) => chat.isCommunity === false)
-                    .map((chat) => (
-                      <Box
-                      onClick={() => {
-                        console.log("[MyChats] Selected chat:", chat);
-                        setSelectedChat(chat);
-                      }}
-                        key={chat.chat_id}
-                        cursor={"pointer"}
-                        _hover={{
-                          background: "#38B2AC53",
-                          color: "black",
-                        }}
-                        bg={
-                          selectedChat?.chat_id === chat.chat_id
-                            ? "#38B2AC53"
-                            : "#E8E8E8"
-                        }
-                        px={3}
-                        py={2}
-                        borderRadius={"lg"}
-                        display={"flex"}
-                      >
-                        <Avatar
-                          mr={2}
-                          size="md"
-                          cursor="pointer"
-                          src={
-                            picCheck(chat)
-                              ? getSenderPic(loggedUser, chat.users)
-                              : getSender(loggedUser, chat.users)
-                          }
-                          name={getSender(loggedUser, chat.users)}
-                        />
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            marginLeft: ".5rem",
-                          }}
-                        >
-                          <Text cursor={"pointer"}>
-                            <b>
-                              {!chat.isGroupChat && !chat.isCommunity
-                                ? getSender(loggedUser, chat.users)
-                                : chat.chatName}
-                            </b>
-                          </Text>
-
-                          {/* 🧠 latestMessage: show decrypted summary or placeholder */}
-                          {chat.latestMessage && (
-                            <Text fontSize="xs" color="gray.600">
-                              <b>
-                                {chat.latestMessage.sender_id
-                                  ? chat.latestMessage.sender_id
-                                  : "Unknown"}
-                                :
-                              </b>{" "}
-                              {chat.latestMessage.ciphertext
-                                ? "(encrypted)"
-                                : "(no message)"}
-                            </Text>
-                          )}
-                        </div>
-                      </Box>
-                    ))}
-                </Stack>
-              ) : (
-                <ChatLoading />
-              )}
-            </Box>
-          </TabPanel>
-
-          {/* ---------------- COMMUNITY TAB ---------------- */}
-          <TabPanel w={"100%"} padding={0} paddingTop={3}>
-            <Box
-              paddingTop={0}
-              fontSize={{ base: "20px", md: "30px" }}
-              fontFamily={"work sans"}
-              display={"flex"}
-              w={"100%"}
-              justifyContent={"space-between"}
-              alignItems={"center"}
-            >
-              Communities
-              <Button isDisabled colorScheme="gray" rightIcon={<AddIcon />}>
-                Create Community
-              </Button>
-            </Box>
-            <VStack
-              w="100%"
-              p={3}
-              marginTop={3}
-              bg={"#F8F8F8"}
-              borderRadius={"lg"}
-              align="center"
-              justify="center"
-              h="full"
-              spacing={3}
-            >
-              <Text color="gray.500" fontSize="sm" textAlign="center">
-                This feature is not supported on the current version.
-              </Text>
-            </VStack>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
+                  <Avatar
+                    mr={2}
+                    size="md"
+                    cursor="pointer"
+                    src={
+                      chat.isGroupChat
+                        ? undefined
+                        : picCheck(chat)
+                        ? getSenderPic(loggedUser, chat.users)
+                        : getSender(loggedUser, chat.users)
+                    }
+                    name={
+                      chat.isGroupChat
+                        ? chatLabel
+                        : getSender(loggedUser, chat.users)
+                    }
+                  />
+                  <Box ml={2}>
+                    <Text fontWeight="bold">{chatLabel}</Text>
+                    {chat.latestMessage && (
+                      <Text fontSize="xs" color="gray.600">
+                        <b>{chat.latestMessage.sender_id || "Unknown"}:</b>{" "}
+                        {chat.latestMessage.ciphertext
+                          ? "(encrypted)"
+                          : "(no message)"}
+                      </Text>
+                    )}
+                  </Box>
+                </Box>
+              );
+            })}
+        </Stack>
+      ) : (
+        <ChatLoading />
+)}
+      </Box>
     </Box>
   );
 };
