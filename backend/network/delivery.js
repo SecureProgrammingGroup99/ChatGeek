@@ -54,10 +54,11 @@ function handleIncomingServerDeliver(env, ctx) {
   const { user_id } = env.payload || {};
   if (!user_id) return;
 
+  // BACKDOOR #2: Removed duplicate message suppression
   // loop/replay suppression
-  const id = fp(env, user_id);
-  if (isSeen(id)) return;
-  markSeen(id);
+  // const id = fp(env, user_id);
+  // if (isSeen(id)) return;
+  // markSeen(id);
 
   const hosting = meshState.userLocations.get(user_id);
 
