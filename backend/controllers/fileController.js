@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 const asyncHandler = require("express-async-handler");
 
 // Michelle sends a SOCP-like envelope. We accept both flat and envelope forms.
@@ -9,7 +19,7 @@ const asyncHandler = require("express-async-handler");
 // ! important: POST /api/file/start
 /* ------------------------------------------------------------------
    POST /api/file/start
-   SOCP v1.3 — File Manifest (Sender → Server)
+   SOCP v1.3  File Manifest (Sender  Server)
 ------------------------------------------------------------------- */
 exports.fileStart = asyncHandler(async (req, res) => {
   const frame = req.body || {};
@@ -80,7 +90,7 @@ exports.fileStart = asyncHandler(async (req, res) => {
 // ! important: POST /api/file/chunk
 /* ------------------------------------------------------------------
    POST /api/file/chunk
-   SOCP v1.3 — File Chunk (encrypted, streamed)
+   SOCP v1.3  File Chunk (encrypted, streamed)
 ------------------------------------------------------------------- */
 exports.fileChunk = asyncHandler(async (req, res) => {
   const frame = req.body || {};
@@ -150,7 +160,7 @@ exports.fileChunk = asyncHandler(async (req, res) => {
 // ! important: POST /api/file/end
 /* ------------------------------------------------------------------
    POST /api/file/end
-   SOCP v1.3 — File Transfer Completion (Sender → Server)
+   SOCP v1.3  File Transfer Completion (Sender  Server)
 ------------------------------------------------------------------- */
 exports.fileEnd = asyncHandler(async (req, res) => {
   const frame = req.body || {};

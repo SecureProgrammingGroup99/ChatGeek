@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 // Sends:
 //   1) SERVER_HELLO_LINK (teaches our pubkey)
 //   2) signed SERVER_DELIVER for an unknown user
@@ -62,7 +72,7 @@ const now = () => Date.now();
 
     setTimeout(() => {
       const deliver = { type: "SERVER_DELIVER", from: PEER_ID, to: "*", ts: now(), payload, sig };
-      console.log("[error-sanity] sending signed SERVER_DELIVER to UNKNOWN-USER …");
+      console.log("[error-sanity] sending signed SERVER_DELIVER to UNKNOWN-USER ");
       send(ws, deliver);
     }, 200);
 
@@ -79,7 +89,7 @@ const now = () => Date.now();
         if (msg.type === "ERROR") {
           clearTimeout(timeout);
           if (msg.payload?.code === "USER_NOT_FOUND") {
-            console.log("[error-sanity] ✅ got USER_NOT_FOUND as expected");
+            console.log("[error-sanity]  got USER_NOT_FOUND as expected");
             process.exit(0);
           } else {
             console.log("[error-sanity] got ERROR (unexpected code):", msg.payload?.code);

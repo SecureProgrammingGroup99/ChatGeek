@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import {
   Avatar,
@@ -49,7 +59,7 @@ const SideDrawer = () => {
     history.push("/");
   };
 
-  // 🔍 User search (uses /api/user/search)
+  //  User search (uses /api/user/search)
   const handleSearch = async () => {
     if (!search.trim()) {
       toast({
@@ -82,7 +92,7 @@ const SideDrawer = () => {
         config
       );
 
-      // 🧽 Normalize fields for UI components (UserListItem, etc.)
+      //  Normalize fields for UI components (UserListItem, etc.)
       const normalized = (Array.isArray(data) ? data : []).map((u) => {
         const user_id = u.user_id ?? u._id;
         return {
@@ -110,7 +120,7 @@ const SideDrawer = () => {
     }
   };
 
-  // 💬 Start or access DM
+  //  Start or access DM
   const accessChat = async (userId) => {
     try {
       setLoadingChat(true);
@@ -127,10 +137,10 @@ const SideDrawer = () => {
         },
       };
 
-      // ✅ Send new-format payload
+      //  Send new-format payload
       const { data } = await axios.post("/api/chat", { userId }, config);
 
-      // ✅ use chat_id instead of _id
+      //  use chat_id instead of _id
       if (!chats.find((c) => c.chat_id === data.chat_id)) {
         setChats([data, ...chats]);
       }
@@ -186,7 +196,7 @@ const SideDrawer = () => {
         </Text>
 
         <div>
-          {/* 🔔 Notifications */}
+          {/*  Notifications */}
           <Menu>
             <MenuButton p={1}>
               <NotificationBadge
@@ -219,7 +229,7 @@ const SideDrawer = () => {
             </MenuList>
           </Menu>
 
-          {/* 👤 Profile menu */}
+          {/*  Profile menu */}
           <Menu>
             <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
               <Avatar
@@ -243,7 +253,7 @@ const SideDrawer = () => {
         </div>
       </Box>
 
-      {/* 🔍 Drawer for user search */}
+      {/*  Drawer for user search */}
       <Drawer placement="left" onClose={onClose} isOpen={isOpen}>
         <DrawerOverlay />
         <DrawerContent>

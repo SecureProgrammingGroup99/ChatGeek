@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 const express = require('express');
 const crypto = require('crypto');
 const { randomUUID } = require('crypto');
@@ -112,7 +122,7 @@ const N_BIG = anyToBigInt(GROUP.N);
 const G_BIG = anyToBigInt(GROUP.g);
 
 if (G_BIG !== 5n) {
-  console.warn('⚠️ Unexpected SRP generator; expected g=5, got:', G_BIG.toString());
+  console.warn(' Unexpected SRP generator; expected g=5, got:', G_BIG.toString());
 }
 
 // k = H(N || g_minimal)
@@ -128,7 +138,7 @@ const PENDING = new Map();  // login_id -> { user_id, sBuf, vBig, bBig, ABig, BB
    Routes
    =========================== */
 
-// 0) Params for registration/login — client needs N, g, hash to compute verifier or A
+// 0) Params for registration/login  client needs N, g, hash to compute verifier or A
 router.get('/params', (_req, res) => {
   res.json({
     scheme: 'srp-6a',
@@ -179,7 +189,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// 1) Client → Server: send A  =>  Server replies with salt, B, login_id
+// 1) Client  Server: send A  =>  Server replies with salt, B, login_id
 // Body: { user_id, A }
 router.post('/1', async (req, res) => {
   try {
@@ -193,7 +203,7 @@ router.post('/1', async (req, res) => {
     const vBig = hasUser ? bytesToBigInt(b64uDec(user.pake_password.verifier)) : 1n; // dummy to hide existence
     const ABig = bytesToBigInt(b64uDec(A));
 
-    // Reject A ≡ 0 (mod N)
+    // Reject A  0 (mod N)
     if (ABig % N_BIG === 0n) return res.status(400).json({ error: 'BAD_A' });
 
     // b random; B = (k*v + g^b) mod N
@@ -216,7 +226,7 @@ router.post('/1', async (req, res) => {
   }
 });
 
-// 3) Client → Server: send M1; Server verifies; returns M2 + session
+// 3) Client  Server: send M1; Server verifies; returns M2 + session
 // Body: { login_id, M1 }
 router.post('/3', async (req, res) => {
   try {

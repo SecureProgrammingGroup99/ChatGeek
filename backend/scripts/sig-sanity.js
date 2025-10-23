@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 // Exercises three cases against your WS listener:
 // 1) unsigned non-bootstrap -> DROP (MISSING_SIG)
 // 2) signed with WRONG key   -> DROP (INVALID_SIG)
@@ -44,7 +54,7 @@ async function signedDeliverWith(privB64Url) {
 
   const ws = new WebSocket(URL);
   ws.on("open", async () => {
-    console.log("[sig] connected; sending SERVER_HELLO_LINK (unsigned, allowed) …");
+    console.log("[sig] connected; sending SERVER_HELLO_LINK (unsigned, allowed) ");
     send(ws, {
       type: "SERVER_HELLO_LINK",
       from: PEER_ID,

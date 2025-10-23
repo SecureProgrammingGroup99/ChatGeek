@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 import {
   encryptMessage,
   decryptMessage,
@@ -6,7 +16,7 @@ import {
 } from "./crypto";
 
 /* ===========================================================
-     🔐 SOCP File Transfer (v1.3 — Secure Version)
+      SOCP File Transfer (v1.3  Secure Version)
      - Uses existing crypto helpers (encryptMessage, decryptMessage)
      - Each frame optionally signed by sender's private key
      - No importPublicKey dependency
@@ -72,8 +82,8 @@ async function splitFileIntoChunks(file, chunkSize = MAX_RSA_OAEP_BLOCK) {
 }
 
 /* ===========================================================
-     🟦 STREAMING FILE TRANSFER
-     Yields FILE_START → FILE_CHUNK* → FILE_END sequentially.
+      STREAMING FILE TRANSFER
+     Yields FILE_START  FILE_CHUNK*  FILE_END sequentially.
      Requires:
        - senderPrivKeyB64url (for signing)
        - recipientPubKeyB64url (for encryption)
@@ -94,7 +104,7 @@ export async function* streamFileTransfer(
   const fullBuf = new Uint8Array(await file.arrayBuffer());
   const sha256 = await sha256Hex(fullBuf);
 
-  // --- 1️⃣ FILE_START ---
+  // --- 1 FILE_START ---
   const startPayload = {
     file_id: fileId,
     name: file.name ?? "download.bin",
@@ -115,7 +125,7 @@ export async function* streamFileTransfer(
     sig: startSig,
   };
 
-  // --- 2️⃣ FILE_CHUNK* ---
+  // --- 2 FILE_CHUNK* ---
   const rawChunks = await splitFileIntoChunks(file, MAX_RSA_OAEP_BLOCK);
 
   for (let i = 0; i < rawChunks.length; i++) {
@@ -141,7 +151,7 @@ export async function* streamFileTransfer(
     }
   }
 
-  // --- 3️⃣ FILE_END ---
+  // --- 3 FILE_END ---
   const endPayload = { file_id: fileId };
   const endSig = await signMessage(
     JSON.stringify(endPayload),
@@ -158,11 +168,11 @@ export async function* streamFileTransfer(
 }
 
 /* ===========================================================
-     🟩 FILE RECEIVER (reassembly & verification)
+      FILE RECEIVER (reassembly & verification)
   =========================================================== */
 export class FileReceiver {
   constructor() {
-    this.files = new Map(); // file_id → { meta, chunks }
+    this.files = new Map(); // file_id  { meta, chunks }
   }
 
   async handleMessage(msg, myPrivB64Url) {
@@ -192,7 +202,7 @@ export class FileReceiver {
             : new Uint8Array(await decrypted.arrayBuffer?.());
         entry.chunks.set(payload.index, bytes);
       } catch (err) {
-        console.error(`[SOCP][sending files] ❌ Decryption failed`, err);
+        console.error(`[SOCP][sending files]  Decryption failed`, err);
       }
       return;
     }

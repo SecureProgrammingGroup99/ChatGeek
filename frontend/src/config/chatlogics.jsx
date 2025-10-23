@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 /**
  * Extracts the logical sender ID for any SOCP frame type.
  * Works for both outgoing frames (with `.from`) and
@@ -7,7 +17,7 @@
 /*
 SUMMARY OF all message frame types that are passed into ScrollableChat.jsx:
 
-1-Sent Text Message (we → others)
+1-Sent Text Message (we  others)
 
 {
 "type": "MSG_DIRECT" | "MSG_PUBLIC_CHANNEL",
@@ -24,7 +34,7 @@ SUMMARY OF all message frame types that are passed into ScrollableChat.jsx:
 "successful": true
 }
 
-2-Received Text Message (others → we)
+2-Received Text Message (others  we)
 
 {
 "type": "USER_DELIVER",
@@ -41,7 +51,7 @@ SUMMARY OF all message frame types that are passed into ScrollableChat.jsx:
 "successful": true
 }
 
-3-Sent File Message (we → others)
+3-Sent File Message (we  others)
 {
 "type": "FILE",
 "name": "report.pdf",
@@ -53,7 +63,7 @@ SUMMARY OF all message frame types that are passed into ScrollableChat.jsx:
 "successful": true
 }
 
-4-Received File Message (others → we)
+4-Received File Message (others  we)
 {
 "type": "FILE",
 "name": "report.pdf",
@@ -68,7 +78,7 @@ SUMMARY OF all message frame types that are passed into ScrollableChat.jsx:
 */
 
 /**
- * Return the sender’s UUID from a message frame.
+ * Return the senders UUID from a message frame.
  */
 export const getSenderId = (m) => {
   if (!m) return null;
@@ -89,7 +99,7 @@ const curr = getSenderId(m);
 const next = getSenderId(messages[i + 1]);
 
 return curr !== userId && curr !== next;
-// “Show the avatar if this message was not sent by me (curr !== userId) and the next message is from a different sender (curr !== next).”
+// Show the avatar if this message was not sent by me (curr !== userId) and the next message is from a different sender (curr !== next).
 };
 
 /**
@@ -103,7 +113,7 @@ const curr = getSenderId(messages[i]);
 const last = getSenderId(messages[messages.length - 1]);
 
 return curr !== userId && curr === last;
-// “If this message is from someone else and it’s the very last one in the chat, show their avatar.”
+// If this message is from someone else and its the very last one in the chat, show their avatar.
 };
 
 
@@ -126,7 +136,7 @@ return 0;
 };
 
 /**
- * Determines whether this message should visually “stack”
+ * Determines whether this message should visually stack
  * with the one above (same sender, consecutive).
  */
 export const isSameUser = (messages, m, i) => {

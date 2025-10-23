@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 import {
     Button,
     FormControl,
@@ -83,7 +93,7 @@ import {
         );
   
   
-        // ✅ Store minimal info
+        //  Store minimal info
         localStorage.setItem("userInfo", JSON.stringify(data.user));
         setUser(data.user);
         setPrivateKey(keyPair.privateKey);
@@ -99,7 +109,7 @@ import {
         setLoading(false);
         history.push("/chats");
       } catch (error) {
-        console.error("❌ Registration error:", error);
+        console.error(" Registration error:", error);
         toast({
           title: "Error Occurred!",
           description: error.response?.data?.error || "Registration failed",

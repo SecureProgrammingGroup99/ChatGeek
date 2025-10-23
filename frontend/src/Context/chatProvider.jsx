@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 import { createContext, useContext, useEffect, useState } from "react";
 import { useHistory } from 'react-router-dom';
 
@@ -11,7 +21,7 @@ const ChatProvider = ({ children }) => {
     const [notification, setNotification] = useState([]);
     const history = useHistory();
     
-    const [privateKey, setPrivateKey] = useState(null);// 🔐 memory-only private key
+    const [privateKey, setPrivateKey] = useState(null);//  memory-only private key
     
     // auto-load user from localStorage
     useEffect(() => {
@@ -24,7 +34,7 @@ const ChatProvider = ({ children }) => {
         setUser(userInfo);
       }, [history]);
 
-    // 🔒 Auto-logout and clear private key after 15 minutes
+    //  Auto-logout and clear private key after 15 minutes
     useEffect(() => {
         if (!privateKey) return;
     

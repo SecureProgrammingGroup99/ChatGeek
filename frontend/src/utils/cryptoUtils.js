@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 import forge from "node-forge";
 
 export class CryptoUtils {
@@ -5,7 +15,7 @@ export class CryptoUtils {
   static generateKeyPair() {
     return new Promise((resolve, reject) => {
       try {
-        // This produces a generic RSA-4096 keypair (modulus + exponents). It’s not “an RSA-OAEP key” or “an RSA-PSS key.” OAEP vs PSS are schemes you use later, not different key types at generation time.
+        // This produces a generic RSA-4096 keypair (modulus + exponents). Its not an RSA-OAEP key or an RSA-PSS key. OAEP vs PSS are schemes you use later, not different key types at generation time.
         forge.pki.rsa.generateKeyPair(
           { bits: 4096, workers: 2 },
           (err, keypair) => {
@@ -14,11 +24,11 @@ export class CryptoUtils {
               return;
             }
 
-            // Public key → SPKI PEM (BEGIN PUBLIC KEY)
+            // Public key  SPKI PEM (BEGIN PUBLIC KEY)
             const publicKeyPem = forge.pki.publicKeyToPem(keypair.publicKey);
 
-            // Private key → PKCS#8 PEM (BEGIN PRIVATE KEY)
-            // (Convert RSA private from PKCS#1 ASN.1 → wrap into PKCS#8 PrivateKeyInfo → PEM)
+            // Private key  PKCS#8 PEM (BEGIN PRIVATE KEY)
+            // (Convert RSA private from PKCS#1 ASN.1  wrap into PKCS#8 PrivateKeyInfo  PEM)
             const rsaAsn1 = forge.pki.privateKeyToAsn1(keypair.privateKey); // RSAPrivateKey
             const pkcs8Asn1 = forge.pki.wrapRsaPrivateKey(rsaAsn1); // PrivateKeyInfo
             const privateKeyPem = forge.pki.privateKeyInfoToPem(pkcs8Asn1); // "-----BEGIN PRIVATE KEY-----"

@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 // Build & sign SOCP envelopes (transport signatures) and verify incoming frames.
 
 const cfg = require("./config");
@@ -51,7 +61,7 @@ function verifyIncoming(env) {
 
   if (!peerKey) {
     if (BOOTSTRAP_TYPES.has(env.type)) return { ok: true };
-    // Unknown peer key and not a bootstrap message → reject softly
+    // Unknown peer key and not a bootstrap message  reject softly
     return { ok: false, reason: "UNKNOWN_PEER_KEY" };
   }
 

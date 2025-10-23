@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 // Lightweight validation for envelopes & payloads.
 const crypto = require("crypto");
 const cfg = require("./config");
@@ -12,7 +22,7 @@ const LIMITS = {
   CIPHERTEXT_B64U_MAX: 1024 * 256,   // 256 KB
   FILE_CHUNK_B64U_MAX: 1024 * 256,   // 256 KB
   PUBLIC_META_MAX: 8 * 1024,         // 8 KB
-  SKEW_MS: 5 * 60 * 1000,            // ±5 minutes clock skew
+  SKEW_MS: 5 * 60 * 1000,            // 5 minutes clock skew
 };
 
 const UUIDv4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

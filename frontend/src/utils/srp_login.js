@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 /* eslint-env es2021 */
 /* global BigInt */
 
@@ -74,7 +84,7 @@ export async function srpLogin({ baseUrl = '', user_id, password }) {
   const s = b64u.dec(salt);
   const Bbig = bufToBigInt(b64u.dec(B));
 
-  // Reject B ≡ 0 (mod N)
+  // Reject B  0 (mod N)
   if (Bbig % N === 0n) throw new Error('Server sent bad B');
 
   // k = H(N || g)

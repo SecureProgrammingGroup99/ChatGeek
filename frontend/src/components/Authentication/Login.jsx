@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 import React, { useState } from "react";
 import {
   Button,
@@ -71,13 +81,13 @@ const Login = () => {
 
         // TODO: this is strange - the response from /api/user/login is just basically whether this user exists. It does not give the actual decrypted private key (of course). If so then the only way we can check if the decrypted key is correct is just whether it starts with "....PRIVATE KEY????"
       if (!decryptedPrivateKey.includes("BEGIN RSA PRIVATE KEY")) {
-        console.warn("⚠️ Password incorrect!");
+        console.warn(" Password incorrect!");
       }
 
-      // ✅ store decrypted key only in memory
+      //  store decrypted key only in memory
       setPrivateKey(decryptedPrivateKey);
 
-      // ✅ store non-sensitive info only in localStorage
+      //  store non-sensitive info only in localStorage
       localStorage.setItem("userInfo", JSON.stringify(data.user));
       setUser(data.user);
 
@@ -92,7 +102,7 @@ const Login = () => {
       setLoading(false);
       history.push("/chats");
     } catch (error) {
-      console.error("❌ Login error:", error);
+      console.error(" Login error:", error);
       const msg =
         error.response?.data?.error || error.message || "Login failed";
 

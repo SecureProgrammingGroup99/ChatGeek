@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 // Connects as a dummy peer, sends SERVER_HELLO_LINK, then idles.
 // Expect the server to evict and close the connection after PEER_DEAD_MS.
 
@@ -14,11 +24,11 @@ function send(ws, frame) {
 }
 const now = () => Date.now();
 
-console.log(`[hb-sanity] connecting to ${URL} as ${PEER_ID} …`);
+console.log(`[hb-sanity] connecting to ${URL} as ${PEER_ID} `);
 const ws = new WebSocket(URL);
 
 ws.on("open", () => {
-  console.log("[hb-sanity] connected; sending SERVER_HELLO_LINK (no heartbeats will follow) …");
+  console.log("[hb-sanity] connected; sending SERVER_HELLO_LINK (no heartbeats will follow) ");
   send(ws, {
     type: "SERVER_HELLO_LINK",
     from: PEER_ID,

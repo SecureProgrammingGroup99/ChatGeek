@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 const express = require("express");
 const dotenv = require("dotenv");
 const { EventEmitter } = require("events");
@@ -86,7 +96,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
 app.use("/api/file", fileRoutes);
 
-// File routes — only mount if present
+// File routes  only mount if present
 try {
   console.log("[HTTP] /api/file mounted");
 } catch (e) {
@@ -243,7 +253,7 @@ io.on("connection", (socket) => {
       // skip sender
       if (user.user_id === newMessageReceived.sender.user_id) return;
 
-      // emit to each recipient’s user_id room
+      // emit to each recipients user_id room
       socket
         .in(user.user_id)
         .emit("message received", newMessageReceived.frame);
@@ -255,7 +265,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// ===== Bridge SOCP bus → Socket.IO (deliveries & files) =====
+// ===== Bridge SOCP bus  Socket.IO (deliveries & files) =====
 bus.on("network:userDeliver", (frame) => {
   try {
     const to = frame?.to;

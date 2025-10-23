@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 const asyncHandler = require("express-async-handler");
 const Message = require("../models/messageModel");
 const User = require("../models/userModel");
@@ -86,7 +96,7 @@ const sendMessage = asyncHandler(async (req, res) => {
     // 4. Forward to overlay network (same as SLC)
     // -------------------------------
     if (!req.app.locals?.network?.sendServerDeliver) {
-      console.error("[SOCP][sendMessage] ❌ network_api_missing");
+      console.error("[SOCP][sendMessage]  network_api_missing");
       return res.status(500).json({ ok: false, error: "network_api_missing" });
     }
 

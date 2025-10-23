@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 import React, { useEffect, useState } from "react";
 import { ChatState } from "../Context/chatProvider";
 import {
@@ -26,7 +36,7 @@ const MyChat = ({ fetchAgain }) => {
   const { user, setSelectedChat, selectedChat, chats, setChats } = ChatState();
   const toast = useToast();
 
-  // 🧠 Helper: gracefully check for user picture
+  //  Helper: gracefully check for user picture
   const picCheck = (chat) => {
     const picture = getSenderPic(loggedUser, chat.users);
     if (
@@ -39,7 +49,7 @@ const MyChat = ({ fetchAgain }) => {
     }
   };
 
-  // 🧠 Fetch all chats (now expect chat.chat_id instead of _id)
+  //  Fetch all chats (now expect chat.chat_id instead of _id)
   const fetchChat = async () => {
     try {
       const config = {
@@ -114,7 +124,7 @@ const MyChat = ({ fetchAgain }) => {
        {chats ? (
         <Stack>
           {chats
-            // ✅ Filter out null or malformed chats
+            //  Filter out null or malformed chats
             .filter((chat) => chat && (chat.chatName || chat.name))
             .map((chat) => {
               const chatLabel = chat.chatName || chat.name || "Unnamed Chat";

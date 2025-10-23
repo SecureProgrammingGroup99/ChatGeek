@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 import React, { useEffect, useState, useRef } from "react";
 import { ChatState } from "../Context/chatProvider";
 import {
@@ -60,7 +70,7 @@ const normalizeDeliveredFrame = async (frame, myPrivKey) => {
     const plaintext = await decryptMessage(ciphertext, myPrivKey);
 
 <<<<<<< HEAD
-    // Prepare canonical verification inputs (SOCP §12)
+    // Prepare canonical verification inputs (SOCP 12)
     const dmString = `${ciphertext}${frame.from}${frame.to}${frame.ts}`;
     const pubString = `${ciphertext}${frame.from}${frame.ts}`;
 
@@ -114,7 +124,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const myPrivKey = privateKey;
   const myPubKey = user.pubkey;
 
-    // convert PEM → Base64URL if needed
+    // convert PEM  Base64URL if needed
   // derive a normalized version
   const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
   ? pemToBase64Url(myPrivKey)
@@ -218,7 +228,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         if (!recipientPub) {
 =======
         if (!to || !recipientPub) {
-          console.error("[SOCP] ❌ DM recipient missing info");
+          console.error("[SOCP]  DM recipient missing info");
 >>>>>>> bee8af7 (Adi's  Bug fixes)
           return;
         }
@@ -229,7 +239,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         const ciphertext = await encryptMessage(plaintext, normalizedRecipientPub);
 <<<<<<< HEAD
         const toSign = signDataDM(ciphertext, from, to, ts);
-        // derive a normalized version (PEM → Base64URL if needed)
+        // derive a normalized version (PEM  Base64URL if needed)
         const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
         ? pemToBase64Url(myPrivKey)
         : myPrivKey;
@@ -388,7 +398,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         if (!recipientPub) {
 =======
         if (!to || !recipientPub) {
-          console.error("[SOCP] ❌ Recipient missing for file send");
+          console.error("[SOCP]  Recipient missing for file send");
 >>>>>>> bee8af7 (Adi's  Bug fixes)
           return;
         }
@@ -545,7 +555,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     const handler = async (frame) => {
 <<<<<<< HEAD
 
-      // derive a normalized version (PEM → Base64URL if needed)
+      // derive a normalized version (PEM  Base64URL if needed)
       const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
         ? pemToBase64Url(myPrivKey)
         : myPrivKey;
@@ -758,7 +768,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                         style={{ cursor: "pointer" }}
                         onClick={() => fileInputRef.current?.click()}
                       >
-                        📎
+                        
                       </span>
                     </>
                   </InputRightElement>
@@ -778,7 +788,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 border="1px solid #ffcccc"
               >
                 <Text color="red.600" fontWeight="semibold">
-                  ❌ This feature is not supported in the current version. (Community chat)
+                   This feature is not supported in the current version. (Community chat)
                 </Text>
               </Box>
             )}

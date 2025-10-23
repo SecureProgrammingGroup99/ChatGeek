@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 import {
   Box,
   Button,
@@ -30,20 +40,20 @@ const GroupChatModal = ({ children }) => {
   const toast = useToast();
   const { user, chats, setChats } = ChatState();
 
-  // 🔍 Search for users
+  //  Search for users
   const handleSearch = async (query) => {
     if (!query) return;
       
     try {
       setLoading(true);
     
-      // If you’ve moved to session auth, swap this header to x-session-id.
-      // For now I’ll leave your existing code:
+      // If youve moved to session auth, swap this header to x-session-id.
+      // For now Ill leave your existing code:
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
     
       const { data } = await axios.get(`/api/user/search?search=${query}`, config);
     
-      // 🧽 Normalize fields so UserListItem has what it expects
+      //  Normalize fields so UserListItem has what it expects
       const normalized = (Array.isArray(data) ? data : []).map((u) => {
         const user_id = u.user_id ?? u._id;               // prefer user_id
         return {
@@ -70,7 +80,7 @@ const GroupChatModal = ({ children }) => {
     }
   };
 
-  // 🧠 Submit new group creation
+  //  Submit new group creation
   const handleSubmit = async () => {
     if (!groupChatName || selectedUsers.length === 0) {
       toast({
@@ -89,7 +99,7 @@ const GroupChatModal = ({ children }) => {
         headers: { Authorization: `Bearer ${user.token}` },
       };
 
-      // ✅ convert selected users to user_id strings
+      //  convert selected users to user_id strings
       const body = {
         name: groupChatName,
         users: selectedUsers.map((u) => u.user_id),
@@ -130,14 +140,14 @@ const GroupChatModal = ({ children }) => {
     }
   };
 
-  // 🧠 Remove selected user
+  //  Remove selected user
   const handleDelete = (userToDelete) => {
     setSelectedUsers(
       selectedUsers.filter((sel) => sel.user_id !== userToDelete.user_id)
     );
   };
 
-  // 🧠 Add selected user
+  //  Add selected user
   const handleGroup = (userToAdd) => {
     if (selectedUsers.find((u) => u.user_id === userToAdd.user_id)) {
       toast({
@@ -190,7 +200,7 @@ const GroupChatModal = ({ children }) => {
             <Box w="100%" display="flex" flexWrap="wrap">
               {selectedUsers.map((u) => (
                 <UserBadgeItem
-                  key={u.user_id} // ✅ changed
+                  key={u.user_id} //  changed
                   user={u}
                   handleFunction={() => handleDelete(u)}
                 />
@@ -205,7 +215,7 @@ const GroupChatModal = ({ children }) => {
                 .slice(0, 4)
                 .map((u) => (
                   <UserListItem
-                    key={u.user_id} // ✅ changed
+                    key={u.user_id} //  changed
                     user={u}
                     handleFunction={() => handleGroup(u)}
                   />

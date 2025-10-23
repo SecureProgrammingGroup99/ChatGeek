@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 /*
 so the encryption pipeline RSA-OAEP (SHA-256) is: 
 
@@ -8,8 +18,8 @@ so the encryption pipeline RSA-OAEP (SHA-256) is:
 
 and the decryption pipeline is: 
 (2) Base64URL (intput: Base64URL cipher text, output: binary cipher text) 
-→ RSA-OAEP decrypt (intput: binary buffer, output: binary buffer)
- → TextDecoder(); dec.decode(decrypted); (inptut: binary buffer, output: UTF-8 string?)
+ RSA-OAEP decrypt (intput: binary buffer, output: binary buffer)
+  TextDecoder(); dec.decode(decrypted); (inptut: binary buffer, output: UTF-8 string?)
 
  #--------------------------------------------------------------
 
@@ -17,17 +27,17 @@ and the decryption pipeline is:
 
 (1) Signing:
 plaintext (UTF-8)
-  → SHA-256 → hash
-  → encrypt(hash, sender_private_key) → signature (Base64URL)
+   SHA-256  hash
+   encrypt(hash, sender_private_key)  signature (Base64URL)
 
 (2) Verifying:
 plaintext (UTF-8)
-  → SHA-256 → hash₁
+   SHA-256  hash
 signature (Base64URL)
-  → decode → decrypt(signature, sender_public_key) → hash₂
-compare(hash₁, hash₂)
-  → if equal → true
-  → if not → false
+   decode  decrypt(signature, sender_public_key)  hash
+compare(hash, hash)
+   if equal  true
+   if not  false
 */
 
 // Base64url helpers
@@ -56,7 +66,7 @@ function base64UrlToBuf(base64url) {
   return bytes.buffer;
 }
 
-// PEM ↔ Base64URL conversion helpers
+// PEM  Base64URL conversion helpers
 export function pemToBase64Url(pemString) {
   const base64 = pemString
     .replace(/-----BEGIN [A-Z ]+-----/g, "")
@@ -156,8 +166,8 @@ export async function encryptMessage(plaintext, recipientPubB64Url) {
 }
 
 export async function decryptMessage(cipherB64Url, myPrivB64Url) {
-  // Because the Web Crypto API (your browser’s window.crypto.subtle) does not accept raw Base64 text or PEM directly.
-  // It requires a CryptoKey object, imported into the browser’s crypto subsystem.
+  // Because the Web Crypto API (your browsers window.crypto.subtle) does not accept raw Base64 text or PEM directly.
+  // It requires a CryptoKey object, imported into the browsers crypto subsystem.
   const privKey = await importPrivateKey(myPrivB64Url);
   const decrypted = await window.crypto.subtle.decrypt(
     { name: "RSA-OAEP" },

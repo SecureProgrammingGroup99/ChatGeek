@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 // Works with or without the main app running.
 // 1) Try to connect to MESH_WS_PORT
 // 2) If ECONNREFUSED, start an ephemeral WS (same handlers) and test against it.
@@ -12,7 +22,7 @@ const PORT = parseInt(process.env.MESH_WS_PORT || "7081", 10);
 const PEER_ID   = require("crypto").randomUUID();
 
 function sendTestFrames(ws, portLabel) {
-  console.log(`connected to ${portLabel}; sending SERVER_HELLO_LINK…`);
+  console.log(`connected to ${portLabel}; sending SERVER_HELLO_LINK`);
   ws.send(JSON.stringify({
     type: "SERVER_HELLO_LINK",
     from: PEER_ID,
@@ -21,7 +31,7 @@ function sendTestFrames(ws, portLabel) {
     payload: { host: "127.0.0.1", port: portLabel, pubkey: "dummy" },
   }));
   setTimeout(() => {
-    console.log("sending HEARTBEAT…");
+    console.log("sending HEARTBEAT");
     ws.send(JSON.stringify({
       type: "HEARTBEAT",
       from: PEER_ID,
@@ -48,7 +58,7 @@ async function main() {
     setTimeout(() => process.exit(0), 400);
   } catch (err) {
     if (err && (err.code === "ECONNREFUSED" || err.message.includes("ECONNREFUSED"))) {
-      console.log(`[smoke] :${PORT} not listening; starting ephemeral WS…`);
+      console.log(`[smoke] :${PORT} not listening; starting ephemeral WS`);
       // Start ephemeral WS server using your real handlers
       const server = http.createServer();
       const wss = new (require("ws").Server)({ server });

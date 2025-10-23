@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 import { Avatar } from "@chakra-ui/avatar";
 import { Tooltip } from "@chakra-ui/tooltip";
 import { ChatState } from "../Context/chatProvider";
@@ -107,14 +117,14 @@ const ScrollableChat = ({ messages }) => {
                     onClick={(e) => {
                       if (!m.localUrl && !isMine) e.preventDefault();
                     }}
-                    title={m.localUrl || isMine ? "Download" : "Preparing…"}
+                    title={m.localUrl || isMine ? "Download" : "Preparing"}
                   >
                     <span role="img" aria-label="file">
-                      📎
+                      
                     </span>
                     <b>{m.name}</b>
                     {!m.localUrl && !isMine && (
-                      <span style={{ fontSize: "0.8rem", marginLeft: 8 }}>(preparing…)</span>
+                      <span style={{ fontSize: "0.8rem", marginLeft: 8 }}>(preparing)</span>
                     )}
                   </a>
                 ) : (
@@ -122,7 +132,7 @@ const ScrollableChat = ({ messages }) => {
                 )}
 
                 {m.successful && (
-                  <span style={{ fontSize: "0.75rem", marginLeft: "6px", color: "gray" }}>✓</span>
+                  <span style={{ fontSize: "0.75rem", marginLeft: "6px", color: "gray" }}></span>
                 )}
               </span>
             </div>

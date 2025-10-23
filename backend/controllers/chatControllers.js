@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 // ================================================================
 //  backend/controllers/chatControllers.js
 //  Minimal modification: preserve all behaviour
@@ -24,12 +34,12 @@ const accessChat = asyncHandler(async (req, res) => {
   );
 
   if (!userId) {
-    console.warn("[SOCP][accessChat] ❌ Missing userId in request body");
+    console.warn("[SOCP][accessChat]  Missing userId in request body");
     return res.status(400).json({ error: "userId required" });
   }
 
   try {
-    // 🔍 Check if a DM 'group' already exists for this pair
+    //  Check if a DM 'group' already exists for this pair
     const existing = await Group.findOne({
       $or: [
         { name: `${currentUser}-${userId}` },
@@ -37,10 +47,10 @@ const accessChat = asyncHandler(async (req, res) => {
       ],
     });
 
-    // 🟢 CHANGED SECTION
+    //  CHANGED SECTION
     if (existing) {
       console.log(
-        `[SOCP][accessChat] ✅ Found existing DM: ${existing.group_id}`
+        `[SOCP][accessChat]  Found existing DM: ${existing.group_id}`
       );
 
       // fetch members and users for compatibility with frontend
@@ -59,7 +69,7 @@ const accessChat = asyncHandler(async (req, res) => {
       });
     }
 
-    // 🆕 Otherwise create a new "direct chat" group
+    //  Otherwise create a new "direct chat" group
     const newGroupId = uuidv4();
     const newGroup = await Group.create({
       group_id: newGroupId,
@@ -85,9 +95,9 @@ const accessChat = asyncHandler(async (req, res) => {
       },
     ]);
 
-    console.log(`[SOCP][accessChat] 🆕 Created new DM: ${newGroupId}`);
+    console.log(`[SOCP][accessChat]  Created new DM: ${newGroupId}`);
 
-    // 🟢 CHANGED SECTION
+    //  CHANGED SECTION
     const members = await GroupMember.find({
       group_id: newGroupId,
     }).select("member_id");
@@ -125,7 +135,7 @@ const fetchChats = asyncHandler(async (req, res) => {
       .sort({ updatedAt: -1 })
       .lean();
 
-    // 🟢 CHANGED SECTION
+    //  CHANGED SECTION
     const enriched = await Promise.all(
       groups.map(async (g) => {
         const members = await GroupMember.find({

@@ -1,3 +1,13 @@
+﻿/*
+  ChatGeek - Secure Programming Coursework
+  Group: Group 99
+  Members:
+    - Finlay Bunt (Student ID: a1899706)
+    - Akash Sapra (Student ID: a1941012)
+    - Aditya Yadav (Student ID: a1961476)
+    - Josh Harish (Student ID: a1886175)
+    - Michelle Ngoc Bao Nguyen (Student ID: a1894969)
+*/
 // Server-only SOCP handlers (handshake, discovery, presence skeleton, delivery skeleton).
 const cfg = require('../network/config');
 const { meshState } = require('../network/state/meshState');
@@ -93,20 +103,20 @@ function onAck(env, ctx)   { bus.emit("network:ack",   env.payload); }
 function onError(env, ctx) { bus.emit("network:error", env.payload); }
 
 const handlers = {
-  // server↔server bootstraps
+  // serverserver bootstraps
   SERVER_HELLO_JOIN: onServerHelloJoin,
   SERVER_WELCOME: onServerWelcome,
   SERVER_ANNOUNCE: onServerAnnounce,
   SERVER_HELLO_LINK: onServerHelloLink,
 
-  // presence gossip (server↔server)
+  // presence gossip (serverserver)
   USER_ADVERTISE: onUserAdvertise,
   USER_REMOVE: onUserRemove,
 
-  // delivery (server↔server only)
+  // delivery (serverserver only)
   SERVER_DELIVER: onServerDeliver,
 
-  // public channel (server↔server)
+  // public channel (serverserver)
   MSG_PUBLIC_CHANNEL: onMsgPublicChannel,
   PUBLIC_CHANNEL_ADD: onPublicChannelAdd,
   PUBLIC_CHANNEL_UPDATED: onPublicChannelUpdated,
