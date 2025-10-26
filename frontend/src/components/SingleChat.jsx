@@ -36,28 +36,26 @@ import {
   decryptMessage,
   signMessage,
   verifyMessage,
-  pemToBase64Url,
+  pemToBase64Url
 } from "../utils/crypto";
 import { streamFileTransfer, FileReceiver } from "../utils/fileTransfer";
 
 const ENDPOINT = "http://localhost:5001";
-let socket, selectedChatCompare;
+var socket, selectedChatCompare;
+
 
 // ------------------------------------------------------------------
-// Helpers
+// Signing helpers
 // ------------------------------------------------------------------
 const signDataDM = (ciphertext, from, to, ts) => `${ciphertext}${from}${to}${ts}`;
 const signDataPublic = (ciphertext, from, ts) => `${ciphertext}${from}${ts}`;
 
-const normalizePriv = (pk) => {
-  if (!pk) return null;
-  return pk.includes("BEGIN PRIVATE KEY") ? pemToBase64Url(pk) : pk;
-};
-
+// ------------------------------------------------------------------
 // Normalize + decrypt USER_DELIVER frames
+// ------------------------------------------------------------------
 const normalizeDeliveredFrame = async (frame, myPrivKey) => {
   const { payload } = frame || {};
-  if (!payload || !myPrivKey) return { ...frame, plaintext: "[invalid payload]" };
+  if (!payload) return { ...frame, plaintext: "[invalid payload]" };
 
   // SOCP v1.3 structure
   const { ciphertext, sender_pub, content_sig } = payload;
@@ -69,14 +67,10 @@ const normalizeDeliveredFrame = async (frame, myPrivKey) => {
   try {
     const plaintext = await decryptMessage(ciphertext, myPrivKey);
 
-<<<<<<< HEAD
-    // Prepare canonical verification inputs (SOCP 12)
+    // Prepare canonical verification inputs (SOCP §12)
     const dmString = `${ciphertext}${frame.from}${frame.to}${frame.ts}`;
     const pubString = `${ciphertext}${frame.from}${frame.ts}`;
 
-=======
-    // Verify (DM first, then public fallback)
->>>>>>> bee8af7 (Adi's  Bug fixes)
     let ok = false;
 
     // Try DM pattern first
@@ -118,50 +112,47 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const fileInputRef = useRef(null);
   const toast = useToast();
 
-<<<<<<< HEAD
 
 
   const myPrivKey = privateKey;
   const myPubKey = user.pubkey;
 
-    // convert PEM  Base64URL if needed
+    // convert PEM → Base64URL if needed
   // derive a normalized version
   const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
   ? pemToBase64Url(myPrivKey)
   : myPrivKey;
-=======
-  const myPrivKey = privateKey ?? null;
-  const myPubKey = user?.pubkey ?? null;
->>>>>>> bee8af7 (Adi's  Bug fixes)
 
   const isDM = selectedChat && !selectedChat.isGroupChat && !selectedChat.isCommunity;
   const isGroup = selectedChat && selectedChat.isGroupChat;
   const isCommunity = selectedChat && selectedChat.isCommunity;
 
   /* ------------------------------------------------------------------
-     Fetch chat history (messages)
+     Fetch chat history (messages + optional files)
+     Expects array of USER_DELIVER frames for messages.
+     (If/when you add a file-history endpoint, merge it here.)
   ------------------------------------------------------------------- */
   const fetchMessages = async () => {
-    if (!selectedChat || !user?.token || !myPrivKey) return;
+    if (!selectedChat) return;
 
     try {
       const config = { headers: { Authorization: `Bearer ${user.token}` } };
       setLoading(true);
 
+      // chat_id instead of _id
       const { data: frames } = await axios.get(
         `/api/message/${selectedChat.chat_id}`,
         config
       );
 
-      const normalizedKey = normalizePriv(myPrivKey);
+      // derive a normalized version (PEM → Base64URL if needed)
+      const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
+      ? pemToBase64Url(myPrivKey)
+      : myPrivKey;
+
       const normalized = await Promise.all(
-<<<<<<< HEAD
         (frames || []).map((f) => normalizeDeliveredFrame(f, normalizedMyPrivKey))
       ); // TODO: f might not be compatible to normalizeDeliveredFrame
-=======
-        (frames || []).map((f) => normalizeDeliveredFrame(f, normalizedKey))
-      );
->>>>>>> bee8af7 (Adi's  Bug fixes)
       setMessages(normalized);
       setLoading(false);
 
@@ -181,20 +172,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   // ------------------------------------------------------------------
-  // Send text message (DM or Group)
+  // Send text message (build MSG_DIRECT or MSG_PUBLIC_CHANNEL)
   // ------------------------------------------------------------------
   const sendMessage = async (event) => {
     if (event.key !== "Enter" || !newMessage) return;
-    if (!myPrivKey || !myPubKey) {
-      toast({
-        title: "Key not loaded",
-        description: "Load/import your private key to send.",
-        status: "warning",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
 
     try {
       const config = {
@@ -205,7 +186,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       };
 
       const ts = Date.now();
-      const from = user.user_id;
+      const from = user.user_id; // ✅ fixed
       const plaintext = newMessage;
 
       if (!selectedChat?.users || selectedChat.users.length < 2) {
@@ -221,37 +202,28 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
       // ---------- Direct Message ----------
       if (isDM) {
-        const dmRecipient = selectedChat.users.find((u) => u.user_id !== user.user_id);
-        const to = dmRecipient?.user_id;
+        const dmRecipient = selectedChat.users.find(
+          (u) => u.user_id !== user.user_id
+        );
+        const to = dmRecipient.user_id;
         const recipientPub = dmRecipient?.pubkey;
-<<<<<<< HEAD
         if (!recipientPub) {
-=======
-        if (!to || !recipientPub) {
-          console.error("[SOCP]  DM recipient missing info");
->>>>>>> bee8af7 (Adi's  Bug fixes)
           return;
         }
-
         const normalizedRecipientPub = recipientPub.includes("BEGIN PUBLIC KEY")
-          ? pemToBase64Url(recipientPub)
-          : recipientPub;
+        ? pemToBase64Url(recipientPub)
+        : recipientPub;
+
+
         const ciphertext = await encryptMessage(plaintext, normalizedRecipientPub);
-<<<<<<< HEAD
         const toSign = signDataDM(ciphertext, from, to, ts);
-        // derive a normalized version (PEM  Base64URL if needed)
+        // derive a normalized version (PEM → Base64URL if needed)
         const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
         ? pemToBase64Url(myPrivKey)
         : myPrivKey;
 
         const content_sig = await signMessage(toSign, normalizedMyPrivKey);
 
-=======
-        const content_sig = await signMessage(
-          signDataDM(ciphertext, from, to, ts),
-          normalizePriv(myPrivKey)
-        );
->>>>>>> bee8af7 (Adi's  Bug fixes)
 
         const frame = {
           type: "MSG_DIRECT",
@@ -265,29 +237,29 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         setNewMessage("");
         const { data: response } = await axios.post("/api/message", frame, config);
         const ok = response?.ok === true;
-
-        // Local echo
+        // add plaintext directly into frame (top-level, not inside payload)
         const newFrame = { ...frame, plaintext, successful: ok };
         setMessages((prev) => [...prev, newFrame]);
-<<<<<<< HEAD
         const compat = {
           chat: { users: selectedChat.users },
           sender: { user_id: user.user_id },
           frame, // include full SOCP frame if you want backend compatibility later
         };
         socket.emit("new message", compat);
-=======
-
-        // Keep your existing event for legacy compatibility
-        socket.emit("new message", response);
->>>>>>> bee8af7 (Adi's  Bug fixes)
         return;
       }
 
       // ---------- Group Message ----------
       if (isGroup) {
         const to = selectedChat.chat_id;
-        const members = selectedChat.users.filter((u) => u.user_id !== user.user_id);
+        const members = selectedChat.users.filter(
+          (u) => u.user_id !== user.user_id
+        );
+
+        // Normalize once
+        const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
+        ? pemToBase64Url(myPrivKey)
+        : myPrivKey;
 
         let lastFrame = null;
         let okAll = true;
@@ -295,20 +267,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         for (const member of members) {
           const recipientPub = member?.pubkey;
           if (!recipientPub) continue;
-
           const normalizedRecipientPub = recipientPub.includes("BEGIN PUBLIC KEY")
-            ? pemToBase64Url(recipientPub)
-            : recipientPub;
+          ? pemToBase64Url(recipientPub)
+          : recipientPub;
+
           const ciphertext = await encryptMessage(plaintext, normalizedRecipientPub);
-          const content_sig = await signMessage(
-            signDataPublic(ciphertext, from, ts),
-            normalizePriv(myPrivKey)
-          );
+          const toSign = signDataPublic(ciphertext, from, ts);
+          const content_sig = await signMessage(toSign, normalizedMyPrivKey);
 
           const frame = {
             type: "MSG_PUBLIC_CHANNEL",
             from,
-            to, // group_id
+            to, //group_id
             ts,
             payload: { ciphertext, sender_pub: myPubKey, content_sig },
             sig: "",
@@ -317,11 +287,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           try {
             const { data } = await axios.post("/api/message", frame, config);
             if (!data?.ok) okAll = false;
-          } catch {
+          } catch (e){
             okAll = false;
           }
 
-<<<<<<< HEAD
           const compat = {
             chat: { users: selectedChat.users },
             sender: { user_id: user.user_id },
@@ -329,27 +298,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           };
           socket.emit("new message", compat); // your existing behavior
           lastFrame = frame;                 // use the last-built frame as representative
-=======
-          socket.emit("new message", frame);
-          lastFrame = frame;
->>>>>>> bee8af7 (Adi's  Bug fixes)
         }
 
-        setNewMessage("");
+      setNewMessage("");
+      
+        // Local echo: use the last frame as a representative, add plaintext + successful
         if (lastFrame) {
           const echoFrame = { ...lastFrame, plaintext, successful: okAll };
           setMessages((prev) => [...prev, echoFrame]);
         }
+
         return;
-<<<<<<< HEAD
     }
     } 
     catch (err) {
-=======
-      }
-    } catch (err) {
-      console.error("[SOCP][sendMessage] error:", err);
->>>>>>> bee8af7 (Adi's  Bug fixes)
       toast({
         title: "Error Occurred",
         description: "Failed to send message",
@@ -362,23 +324,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   // ------------------------------------------------------------------
-  // Send File (never transmit blob URLs)
+  // Send File
   // ------------------------------------------------------------------
   const sendFile = async () => {
     if (!selectedFile) return;
-    if (!myPrivKey || !myPubKey) {
-      toast({
-        title: "Key not loaded",
-        description: "Load/import your private key to send files.",
-        status: "warning",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
 
     try {
-      const chatId = selectedChat?.chat_id;
+      const chatId = selectedChat?.chat_id; // ✅ fixed
       const mode = isDM ? "dm" : "public";
       const from = user.user_id;
 
@@ -389,52 +341,46 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         },
       };
 
-      // ---------- DM File ----------
       if (isDM) {
-        const dmRecipient = selectedChat.users.find((u) => u.user_id !== user.user_id);
-        const to = dmRecipient?.user_id;
+        const dmRecipient = selectedChat.users.find(
+          (u) => u.user_id !== user.user_id
+        );
+        const to = dmRecipient.user_id;
         const recipientPub = dmRecipient?.pubkey;
-<<<<<<< HEAD
         if (!recipientPub) {
-=======
-        if (!to || !recipientPub) {
-          console.error("[SOCP]  Recipient missing for file send");
->>>>>>> bee8af7 (Adi's  Bug fixes)
           return;
         }
-
         const normalizedRecipientPub = recipientPub.includes("BEGIN PUBLIC KEY")
-          ? pemToBase64Url(recipientPub)
-          : recipientPub;
+        ? pemToBase64Url(recipientPub)
+        : recipientPub;
 
-        // Stream frames (network)
+
         for await (const frame of streamFileTransfer(
           selectedFile,
           mode,
           chatId,
           from,
           normalizedRecipientPub,
-          normalizePriv(myPrivKey)
+          normalizedMyPrivKey     
         )) {
-          const endpoint = `/api/file/${frame.type.split("_")[1].toLowerCase()}`;
+          const endpoint = `/api/file/${frame.type
+            .split("_")[1]
+            .toLowerCase()}`;
           await axios.post(endpoint, frame, config);
           socket.emit("file send", frame);
         }
 
-        // Local optimistic bubble (local URL only; not transmitted)
-        const localUrl = URL.createObjectURL(selectedFile);
-        const tempMsg = {
+        const fileUrl = URL.createObjectURL(selectedFile);
+        const newFileMsg = {
           type: "FILE",
           name: selectedFile.name,
-          localUrl,           // local-only
+          url: fileUrl,
           plaintext: `[File: ${selectedFile.name}]`,
           from,
           to,
           ts: Date.now(),
-          successful: false,
-          temporary: true,    // will be deduped when frames loop back
+          successful: true, //TODO: check if all frames were successful? but for now assume true since it has got to this point
         };
-<<<<<<< HEAD
 
         setMessages((prev) => [...prev, newFileMsg]);
         const compat = {
@@ -443,58 +389,54 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           frame: newFileMsg,
         };
         socket.emit("new message", compat);
-=======
-        setMessages((prev) => [...prev, tempMsg]);
->>>>>>> bee8af7 (Adi's  Bug fixes)
 
         setSelectedFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-        toast({ title: "File sent!", status: "success", duration: 2500, isClosable: true });
+        fileInputRef.current.value = "";
+        toast({ title: "File sent successfully!", status: "success" });
         return;
       }
 
       // ---------- Group File ----------
       if (isGroup) {
-        const members = selectedChat.users.filter((u) => u.user_id !== user.user_id);
+        const members = selectedChat.users.filter(
+          (u) => u.user_id !== user.user_id
+        );
 
         for (const member of members) {
           const recipientPub = member?.pubkey;
           if (!recipientPub) continue;
-
           const normalizedRecipientPub = recipientPub.includes("BEGIN PUBLIC KEY")
-            ? pemToBase64Url(recipientPub)
-            : recipientPub;
+          ? pemToBase64Url(recipientPub)
+          : recipientPub;
 
+            
           for await (const frame of streamFileTransfer(
             selectedFile,
             mode,
             chatId,
             from,
             normalizedRecipientPub,
-            normalizePriv(myPrivKey)
+            normalizedMyPrivKey    
           )) {
-            const endpoint = `/api/file/${frame.type.split("_")[1].toLowerCase()}`;
+            const endpoint = `/api/file/${frame.type
+              .split("_")[1]
+              .toLowerCase()}`;
             await axios.post(endpoint, frame, config);
             socket.emit("file send", frame);
           }
         }
 
-        // Local optimistic bubble
-        const localUrl = URL.createObjectURL(selectedFile);
-        const tempMsg = {
+        const fileUrl = URL.createObjectURL(selectedFile);
+        const newFileMsg = {
           type: "FILE",
           name: selectedFile.name,
-          localUrl,
+          url: fileUrl,
           plaintext: `[File: ${selectedFile.name}]`,
           from,
           to: chatId,
           ts: Date.now(),
-          successful: false,
-          temporary: true,
         };
-        setMessages((prev) => [...prev, tempMsg]);
 
-<<<<<<< HEAD
         setMessages((prev) => [...prev, newFileMsg]);
         const compat = {
           chat: { users: selectedChat.users },
@@ -502,11 +444,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           frame: newFileMsg,
         };
         socket.emit("new message", compat); //! SECURITY WARNING: can we send the full file url and plaintext here?
-=======
->>>>>>> bee8af7 (Adi's  Bug fixes)
         setSelectedFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-        toast({ title: "File sent to group!", status: "success", duration: 2500, isClosable: true });
+        toast({ title: "File sent to group!", status: "success" });
       }
     } catch (err) {
       toast({
@@ -520,118 +459,92 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   // ------------------------------------------------------------------
-  // Socket Lifecycle (connect only when user + key exist)
+  // Socket Lifecycle
   // ------------------------------------------------------------------
   useEffect(() => {
-    if (!user?.user_id || !myPrivKey) return;
     socket = io(ENDPOINT);
     socket.emit("setup", user);
     socket.on("connected", () => setSocketConnected(true));
     socket.on("typing", () => setIsTyping(true));
     socket.on("stop typing", () => setIsTyping(false));
-    return () => {
-      socket.off("connected");
-      socket.off("typing");
-      socket.off("stop typing");
-    };
-  }, [user?.user_id, myPrivKey]);
+  }, [user]);
 
   useEffect(() => {
-    if (!selectedChat || !myPrivKey) return;
     fetchMessages();
     selectedChatCompare = selectedChat;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChat, myPrivKey]);
+  }, [selectedChat]);
 
-  // Debug: log message changes
+  // write a useEffect that prints the new value of messages to console whenever it changes
   useEffect(() => {
   }, [messages]);
 
-  /* ------------------------------------------------------------------
+  
+    /* ------------------------------------------------------------------
      Realtime messages (USER_DELIVER frames)
   ------------------------------------------------------------------- */
   useEffect(() => {
-    if (!myPrivKey) return;
     const handler = async (frame) => {
-<<<<<<< HEAD
 
-      // derive a normalized version (PEM  Base64URL if needed)
+      // derive a normalized version (PEM → Base64URL if needed)
       const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
         ? pemToBase64Url(myPrivKey)
         : myPrivKey;
       const normalized = await normalizeDeliveredFrame(frame, normalizedMyPrivKey);
 
       // If you track per-chat filtering, you can check selectedChatCompare._id here.
-=======
-      console.log("[SOCP][Message received] Incoming USER_DELIVER:", frame);
-      const normalized = await normalizeDeliveredFrame(frame, normalizePriv(myPrivKey));
->>>>>>> bee8af7 (Adi's  Bug fixes)
       setMessages((prev) => [...prev, normalized]);
     };
+
     socket.on("message received", handler);
     return () => socket.off("message received", handler);
-  }, [myPrivKey]);
+  }, []);
 
   /* ------------------------------------------------------------------
      Realtime file frames (FILE_START / CHUNK / END)
   ------------------------------------------------------------------- */
   useEffect(() => {
-    if (!myPrivKey) return;
     const receiver = new FileReceiver();
 
     const fileHandler = async (frame) => {
-<<<<<<< HEAD
-=======
-      console.log("[SOCP] [File frame received] incoming file frame:", frame);
-      const result = await receiver.handleMessage(frame, normalizePriv(myPrivKey));
-      if (!result) return;
->>>>>>> bee8af7 (Adi's  Bug fixes)
 
-      // Build a local blob URL in THIS browser
-      const localUrl = URL.createObjectURL(result.blob);
-
-      const newFileMsg = {
-        type: "FILE",
-        name: result.name,
-        localUrl,                 // local-only (never transmitted)
-        plaintext: `[File: ${result.name}]`,
-        from: frame.from,
-        to: frame.to,
-        ts: frame.ts,
-        successful: true,
-      };
-
-      // Dedup any temporary local bubble from the sender side
-      setMessages((prev) => {
-        const filtered = prev.filter(
-          (m) =>
-            !(
-              m.type === "FILE" &&
-              m.temporary === true &&
-              m.name === result.name &&
-              m.from === user.user_id
-            )
-        );
-        return [...filtered, newFileMsg];
-      });
-
-      toast({
-        title: "File received!",
-        description: result.name,
-        status: "info",
-        duration: 4000,
-        isClosable: true,
-      });
+      // derive a normalized version (PEM → Base64URL if needed)
+      const normalizedMyPrivKey = myPrivKey.includes("BEGIN PRIVATE KEY")
+        ? pemToBase64Url(myPrivKey)
+        : myPrivKey;
+      const result = await receiver.handleMessage(frame, normalizedMyPrivKey);
+      if (result) {
+        const url = URL.createObjectURL(result.blob);
+        const newFileMsg = {
+          type: "FILE",
+          name: result.name,
+          url,
+          plaintext: `[File: ${result.name}]`,
+          from: frame.from,
+          to: frame.to,
+          ts: frame.ts,
+          successful: true, //TODO: check later whether all chunks were received correctly
+        };
+        setMessages((prev) => [...prev, newFileMsg]);
+        
+        toast({
+          title: "File received!",
+          description: result.name,
+          status: "info",
+          duration: 4000,
+          isClosable: true,
+        });
+      }
     };
 
     socket.on("file received", fileHandler);
     return () => socket.off("file received", fileHandler);
-  }, [myPrivKey, user?.user_id]);
+  }, []);
+
 
   // ------------------------------------------------------------------
   // Typing
   // ------------------------------------------------------------------
-  const [lastTypeAt, setLastTypeAt] = useState(0);
+  const [lastTypeAt, setLastTypeAt] = useState(0); // TODO: use this to reduce typing spam?
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
     if (!socketConnected) return;
@@ -639,7 +552,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       setTyping(true);
       socket.emit("typing", selectedChat.chat_id);
     }
-    setLastTypeAt(Date.now());
+    const now = Date.now();
+    setLastTypeAt(now);
     setTimeout(() => {
       socket.emit("stop typing", selectedChat.chat_id);
       setTyping(false);
@@ -679,13 +593,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
             {isGroup && (
               <>
-<<<<<<< HEAD
                 {(selectedChat?.chatName
                   ? selectedChat.chatName.toUpperCase()
                   : "NAME UNKNOWN")}
-=======
-                {selectedChat.chatName?.toUpperCase?.() || selectedChat.name?.toUpperCase?.() || "GROUP"}
->>>>>>> bee8af7 (Adi's  Bug fixes)
                 <UpdateGroupChatModal
                   fetchAgain={fetchAgain}
                   setFetchAgain={setFetchAgain}
@@ -766,9 +676,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                         role="img"
                         aria-label="attach file"
                         style={{ cursor: "pointer" }}
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => fileInputRef.current.click()}
                       >
-                        
+                        📎
                       </span>
                     </>
                   </InputRightElement>
@@ -788,7 +698,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 border="1px solid #ffcccc"
               >
                 <Text color="red.600" fontWeight="semibold">
-                   This feature is not supported in the current version. (Community chat)
+                  This feature is not supported in the current version. (Community chat)
                 </Text>
               </Box>
             )}
@@ -804,5 +714,4 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     </>
   );
 };
-
 export default SingleChat;
