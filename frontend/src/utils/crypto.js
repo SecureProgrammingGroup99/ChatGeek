@@ -75,12 +75,11 @@ export function pemToBase64Url(pemString) {
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-// BACKDOOR #1
 async function generateKeyPair() {
   const keyPair = await window.crypto.subtle.generateKey(
     {
       name: "RSA-OAEP",
-      modulusLength: 1024, // BACKDOOR: Weak 1024-bit instead of 4096
+      modulusLength: 4096,
       publicExponent: new Uint8Array([1, 0, 1]),
       hash: "SHA-256",
     },
